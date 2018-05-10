@@ -1,0 +1,313 @@
+<style>
+	/*@font-face {
+	    font-family:'Simple-Line-Icons';
+	    src:url('fonts/Simple-Line-Icons.eot');
+	    src:url('fonts/Simple-Line-Icons.eot?#iefix') format('embedded-opentype'), url('fonts/Simple-Line-Icons.woff') format('woff'), url('fonts/Simple-Line-Icons.ttf') format('truetype'), url('fonts/Simple-Line-Icons.svg#Simple-Line-Icons') format('svg');
+	    font-weight: normal;
+	    font-style: normal;
+	}
+	[data-icon]::before {
+	    font-family:'Simple-Line-Icons';
+	    content: attr(data-icon);
+	    speak: none;
+	    font-weight: normal;
+	    font-variant: normal;
+	    text-transform: none;
+	}*/
+	*, *::after {
+	    margin: 0;
+	    padding: 0;
+	    box-sizing: border-box;
+	}
+	body{
+		height: 100%;
+		width: 100%;
+
+		background-color: #DDD;
+
+		font-family: sans-serif;
+		font-weight: 100;
+		text-rendering: optimizeLegibility;
+		-webkit-font-smoothing: antialiased;
+		letter-spacing: 0.03em;
+
+		display: flex;
+		flex-wrap: wrap;
+	}
+
+	.bg{
+		background-image: url(img/bg-3.jpg);
+		background-size: cover;
+		background-position: 50% 50%;
+
+		position: fixed;
+		top: -5%;
+		left: -5%;
+		z-index: -9999999999999;
+
+		height: 110%;
+		width: 110%;
+		opacity: .7;
+
+		-webkit-filter: blur(5px);
+	}
+
+	div:not(.bg){
+		-webkit-flex: 1;
+		min-width: 300px;
+		display: flex;
+	}
+
+	a{
+		position: relative;
+		z-index: 10;
+		margin: auto;
+		padding: 1rem 3rem;
+		box-shadow: inset 0 0 0 1px black;
+		transition: all .25s ease-out;
+		cursor: pointer;
+	}
+	span{
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+	}
+	a::before, a::after, span::before, span::after{
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: -10;
+
+		width: 100%;
+		height: 100%;
+
+		pointer-events: none;
+		transition: all .25s ease-out;
+	}
+
+	a.type1::before, a.type1::after, a.type1 span::before, a.type1 span::after{
+		transition: all .25s ease;
+	}
+	a.type1::before{
+		box-shadow: inset 0 1px white;
+		width: 0;
+	}
+	a.type1::after{
+		box-shadow: inset 0 -1px white;
+		width: 0;
+		left: auto;
+		right: 0;
+	}
+	a.type1 span::before{
+		box-shadow: inset 1px 0 white;
+		height: 0;
+		top: auto;
+		bottom: 0;
+	}
+	a.type1 span::after{
+		box-shadow: inset -1px 0 white;
+		height: 0;
+	}
+
+	a.type2::before, a.type2::after, a.type2 span::before, a.type2 span::after{
+		opacity: 0;
+	}
+	a.type2::before{
+		box-shadow: inset 0 1px white;
+		-webkit-transform: translateX(-200%);
+	}
+	a.type2::after{
+		box-shadow: inset 0 -1px white;
+		-webkit-transform: translateX(200%);
+	}
+	a.type2 span::before{
+		box-shadow: inset 1px 0 white;
+		-webkit-transform: translateY(200%);
+	}
+	a.type2 span::after{
+		box-shadow: inset -1px 0 white;
+		-webkit-transform: translateY(-200%);
+	}
+	a.type2:not(:hover)::before{
+		-webkit-animation: flight0 .25s linear;
+	}
+	@-webkit-keyframes flight0 { from { -webkit-transform: translateX(0); } to { -webkit-transform: translateX(200%); } }
+	a.type2:not(:hover)::after{
+		-webkit-animation: flight1 .25s linear;
+	}
+	@-webkit-keyframes flight1 { from { -webkit-transform: translateX(0); } to { -webkit-transform: translateX(-200%); } }
+	a.type2:not(:hover) span::before{
+		-webkit-animation: flight2 .25s linear;
+	}
+	@-webkit-keyframes flight2 { from { -webkit-transform: translateY(0); } to { -webkit-transform: translateY(-200%); } }
+	a.type2:not(:hover) span::after{
+		-webkit-animation: flight3 .25s linear;
+	}
+	@-webkit-keyframes flight3 { from { -webkit-transform: translateY(0); } to { -webkit-transform: translateY(200%); } }
+
+	a.type3::before, a.type3::after, a.type3 span::before, a.type3 span::after{
+		transition: all .25s linear;
+	}
+	a.type3::before{
+		box-shadow: inset 0 1px white;
+		-webkit-transform: translateX(-400%);
+		width: 0;
+	}
+	a.type3::after{
+		box-shadow: inset 0 -1px white;
+		-webkit-transform: translateX(400%);
+		width: 0;
+		left: auto;
+		right: 0;
+	}
+	a.type3 span::before{
+		box-shadow: inset 1px 0 white;
+		-webkit-transform: translateY(400%);
+		height: 0;
+		top: auto;
+		bottom: 0;
+	}
+	a.type3 span::after{
+		box-shadow: inset -1px 0 white;
+		-webkit-transform: translateY(-400%);
+		height: 0;
+	}
+
+	a.type4{
+		transition: all .3s linear;
+	}
+	a.type4::before, a.type4::after, a.type4 span::before, a.type4 span::after{
+		transition: all .1s linear;
+	}
+	a.type4::before{
+		box-shadow: inset 0 1px white;
+		width: 0;
+		transition-delay: 0s;
+	}
+	a.type4::after{
+		box-shadow: inset 0 -1px white;
+		width: 0;
+		left: auto;
+		right: 0;
+		transition-delay: .2s;
+	}
+	a.type4 span::before{
+		box-shadow: inset 1px 0 white;
+		height: 0;
+		top: auto;
+		bottom: 0;
+		transition-delay: .3s;
+	}
+	a.type4 span::after{
+		box-shadow: inset -1px 0 white;
+		height: 0;
+		transition-delay: .1s;
+	}
+	a.type4:not(:hover)::before{		transition-delay: .3s;}
+	a.type4:not(:hover)::after{			transition-delay: .1s;}
+	a.type4:not(:hover) span::before{	transition-delay: 0s;}
+	a.type4:not(:hover) span::after{	transition-delay: .2s;}
+
+
+
+	a:hover{
+		color: white;
+		background-color: rgba(255,255,255,.2);
+	}
+	a:hover::before, a:hover::after, a:hover span::before, a:hover span::after{
+		width: 100%;
+		height: 100%;
+		-webkit-transform: translateX(0) translateY(0);
+		opacity: 1;
+	}
+
+	a.type5{
+		box-shadow: none;
+	}
+	a.type5::before, a.type5::after, a.type5 span::before, a.type5 span::after{
+		opacity: 1;
+	}
+	a.type5::before{
+		box-shadow: inset 0 1px black;
+	}
+	a.type5::after{
+		box-shadow: inset 0 -1px black;
+	}
+	a.type5 span::before{
+		box-shadow: inset 1px 0 black;
+	}
+	a.type5 span::after{
+		box-shadow: inset -1px 0 black;
+	}
+	a.type5:hover{
+		background-color: transparent;
+	}
+	a.type5:hover::before{
+		box-shadow: inset 0 1px white;
+		-webkit-transform: translateY(-1rem);
+	}
+	a.type5:hover::after{
+		box-shadow: inset 0 -1px white;
+		-webkit-transform: translateY(1rem);
+	}
+	a.type5:hover span::before{
+		box-shadow: inset 1px 0 white;
+		-webkit-transform: translateX(-1rem);
+	}
+	a.type5:hover span::after{
+		box-shadow: inset -1px 0 white;
+		-webkit-transform: translateX(1rem);
+	}
+
+	a.type6{
+		box-shadow: none;
+	}
+	a.type6::before, a.type6::after, a.type6 span::before, a.type6 span::after{
+		opacity: 1;
+	}
+	a.type6::before{
+		box-shadow: inset 0 1px black;
+	}
+	a.type6::after{
+		box-shadow: inset 0 -1px black;
+	}
+	a.type6 span::before{
+		box-shadow: inset 1px 0 black;
+	}
+	a.type6 span::after{
+		box-shadow: inset -1px 0 black;
+	}
+	a.type6:hover::before{
+		box-shadow: inset 0 1px white;
+		-webkit-transform: translateX(-25%);
+	}
+	a.type6:hover::after{
+		box-shadow: inset 0 -1px white;
+		-webkit-transform: translateX(25%);
+	}
+	a.type6:hover span::before{
+		box-shadow: inset 1px 0 white;
+		-webkit-transform: translateY(-25%);
+	}
+	a.type6:hover span::after{
+		box-shadow: inset -1px 0 white;
+		-webkit-transform: translateY(25%);
+	}
+
+
+</style>
+
+<div class="bg"></div>
+<div><a class="type1">mangez-moi<span></span></a></div>
+<div><a class="type2">suivre le lapin<span></span></a></div>
+<div><a class="type3">faire des bulles<span></span></a></div>
+<div><a class="type4">click me<span></span></a></div>
+<div><a class="type5">click me<span></span></a></div>
+<div><a class="type6">click me<span></span></a></div>
+
+<script>
+
+</script>

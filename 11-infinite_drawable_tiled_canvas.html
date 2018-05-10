@@ -1,0 +1,173 @@
+<style>
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+canvas {
+	position: absolute;
+}
+</style>
+
+<main></main>
+
+<script>
+var didScroll = true;
+window.onscroll = function() {
+	didScroll = true;
+}
+
+var mouseIsDown = false;
+window.onmousedown = function() {
+	mouseIsDown = true;
+}
+window.onmouseup = function() {
+	mouseIsDown = false;
+}
+
+var main = document.getElementsByTagName('main')[0];
+var tiles = [];
+var exitPointOnPreviousTile = [];
+var previousTile = [];
+Tile.size = window.innerHeight / 3;
+Tile.lineWidth = 1;
+
+function Tile(x, y) {
+	this.x = x;
+	this.y = y;
+
+	this.domObject = document.createElement("canvas");
+	this.domObject.width = Tile.size;
+	this.domObject.height = Tile.size;
+	this.domObject.style.left = this.x * Tile.size;
+	this.domObject.style.top = this.y * Tile.size;
+	this.domObject.style.backgroundColor = "rgba(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 100) + "," + Math.floor(Math.random() * 150) + ", .7)";
+	main.appendChild(this.domObject);
+
+	this.ctx = this.domObject.getContext('2d');
+	this.ctx.lineWidth = Tile.lineWidth;
+	this.ctx.lineCap = "round"
+	this.ctx.lineJoin = "round"
+	// this.ctx.shadowBlur = 2;
+	// this.ctx.shadowColor = "rgba(0,0,0,.5)"
+
+	this.isDrawing = false;
+	this.points = [];
+
+	this.domObject.onmousedown = function(tile, e) {
+		tile.draw(tile, e, false)
+	}.bind(null, this);
+	this.domObject.onmouseover = function(tile, e) {
+		if (mouseIsDown)
+			tile.draw(tile, e, false)
+	}.bind(null, this);
+	this.domObject.onmousemove = function(tile, e) {
+		if (tile.isDrawing || mouseIsDown)
+			tile.draw(tile, e, true)
+	}.bind(null, this);
+	this.domObject.onmouseup = function(tile, e) {
+		tile.stopDrawing(tile, e, false);
+	}.bind(null, this);
+	this.domObject.onmouseout = function(tile, e) {
+		tile.stopDrawing(tile, e, true);
+	}.bind(null, this);
+
+	if (!tiles[x]) tiles[x] = [];
+	tiles[x][y] = this;
+}
+Tile.prototype.x = 0;
+Tile.prototype.y = 0;
+Tile.prototype.domObject = new Object();
+Tile.prototype.isDrawing = false;
+Tile.prototype.points = [];
+Tile.prototype.ctx = false;
+Tile.prototype.draw = function(tile, e, ready) {
+	var xOff = tile.domObject.getBoundingClientRect().left;
+	var yOff = tile.domObject.getBoundingClientRect().top;
+	if (!ready) {
+		tile.ctx.beginPath();
+		tile.isDrawing = true;
+		//draw from beginning of tile (a little before actually)
+		if (exitPointOnPreviousTile[0]) {
+			tile.ctx.moveTo(exitPointOnPreviousTile[0] - xOff, exitPointOnPreviousTile[1] - yOff);
+		} else
+			tile.ctx.moveTo(e.clientX - xOff, e.clientY - yOff);
+		//draw on tile that the fps didn't allow to register a mouseover
+		if (previousTile[0] && exitPointOnPreviousTile[0]) {
+			[getTileByXY(tile.x-(tile.x - previousTile[0]), tile.y), getTileByXY(tile.x, tile.y-(tile.y - previousTile[1]))].forEach(function (tempTile) {
+				tempxOff = tempTile.domObject.getBoundingClientRect().left;
+				tempyOff = tempTile.domObject.getBoundingClientRect().top;
+				tempTile.ctx.beginPath();
+				tempTile.ctx.moveTo(exitPointOnPreviousTile[0] - tempxOff, exitPointOnPreviousTile[1] - tempyOff);
+				tempTile.ctx.lineTo(e.clientX - tempxOff, e.clientY - tempyOff);
+				tempTile.ctx.stroke();
+			})
+		}
+	} else {
+		exitPointOnPreviousTile = [e.clientX, e.clientY];
+		tile.ctx.lineTo(e.clientX - xOff, e.clientY - yOff);
+		tile.ctx.stroke();
+	}
+};
+Tile.prototype.stopDrawing = function(tile, e, out) {
+	if (out && tile.isDrawing) {
+		var xOff = tile.domObject.getBoundingClientRect().left;
+		var yOff = tile.domObject.getBoundingClientRect().top;
+		tile.ctx.lineTo(e.clientX - xOff, e.clientY - yOff);
+		tile.ctx.stroke();
+		previousTile = [tile.x, tile.y];
+	} else {
+		exitPointOnPreviousTile = [];
+		previousTile = [];
+	}
+	tile.isDrawing = false;
+	tile.ctx.closePath();
+}
+
+
+
+var minx = 0;
+var miny = 0;
+
+function fillWithTiles(xmin, ymin, xmax, ymax) {
+	var temp_min_x = 0;
+	var temp_min_y = 0;
+	for (var i = Math.floor(xmin / Tile.size); i < Math.floor(xmax / Tile.size) + 1; i++) {
+		for (var j = Math.floor(ymin / Tile.size); j < Math.floor(ymax / Tile.size) + 1; j++) {
+			if (!getTileByXY(i, j)) {
+				new Tile(i, j);
+				if (temp_min_x > i) temp_min_x = i;
+				if (temp_min_y > j) temp_min_y = j;
+			}
+		}
+	}
+	if (minx > temp_min_x || miny > temp_min_y) {
+		var temp_x = window.pageXOffset,
+			temp_y = window.pageYOffset;
+		main.style.webkitTransform = "translate3d(" + (-(minx > temp_min_x ? temp_min_x : minx) * Tile.size) + "px, " + (-(miny > temp_min_y ? temp_min_y : miny) * Tile.size) + "px, 0)";
+		main.style.transform = "translate3d(" + (-(minx > temp_min_x ? temp_min_x : minx) * Tile.size) + "px, " + (-(miny > temp_min_y ? temp_min_y : miny) * Tile.size) + "px, 0)";
+		window.scroll((minx > temp_min_x ? (temp_x + (minx - temp_min_x) * Tile.size) : window.pageXOffset), (miny > temp_min_y ? (temp_y + (miny - temp_min_y) * Tile.size) : window.pageYOffset));
+		if (minx > temp_min_x) minx = temp_min_x;
+		if (miny > temp_min_y) miny = temp_min_y;
+	}
+}
+
+function getTileByXY(x, y) {
+	if (tiles[x]) return tiles[x][y]
+	return false
+}
+
+fillWithTiles(-window.innerWidth * 3, -window.innerHeight * 3, window.innerWidth * 3, window.innerHeight * 3);
+window.setInterval(function() {
+	if (didScroll) {
+		var wXoff = window.pageXOffset;
+		var wYoff = window.pageYOffset;
+		fillWithTiles(
+			wXoff - 2 * window.innerWidth + minx * Tile.size,
+			wYoff - 2 * window.innerHeight + miny * Tile.size,
+			wXoff + 3 * window.innerWidth + minx * Tile.size,
+			wYoff + 3 * window.innerHeight + miny * Tile.size);
+		didScroll = false;
+	}
+}, 100);
+</script>

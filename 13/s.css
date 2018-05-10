@@ -1,0 +1,65 @@
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+body {
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-size: 15px;
+  font-weight: 100;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
+  letter-spacing: 0.075em;
+  background-color: black;
+  color: white;
+  overflow: hidden;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+body > div {
+  margin: auto;
+  display: block;
+  overflow: hidden;
+  -webkit-transition: all 0.5s ease-out;
+  transition: all 0.5s ease-out;
+}
+.strip {
+  white-space: nowrap;
+  cursor: pointer;
+}
+img {
+  display: inline;
+  height: auto;
+}
+p {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  padding: 1em;
+}
+audio {
+  position: absolute;
+  display: block;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+}
+body:not(.zeo) > div {
+  width: 100%;
+}
+body:not(.zeo) .strip {
+  -webkit-animation-timing-function: linear;
+  animation-timing-function: linear;
+}

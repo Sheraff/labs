@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<style>
+	body{
+		background-color: tomato;
+	}
+	#cube {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		-webkit-transform: translate(-50%, -50%);
+		        transform: translate(-50%, -50%);
+		-webkit-perspective: 1000px;
+		        perspective: 1000px;
+		-webkit-perspective-origin: 50% 50%;
+		        perspective-origin: 50% 50%;
+	}
+
+	#cube>div {
+		margin: auto;
+		position: relative;
+		height: 200px;
+		width: 200px;
+		-webkit-transform-style: preserve-3d;
+		        transform-style: preserve-3d;
+	}
+
+	#cube>div section {
+		position: absolute;
+		box-sizing: border-box;
+		height: 100%;
+		width: 100%;
+		background-color: white;
+		overflow: hidden;
+		box-shadow: inset 0 0 10px rgba(0, 0, 0, .2), 0 0 20px rgba(0, 0, 0, .1);
+		transition: -webkit-transform 0.2s ease-in;
+		transition: transform 0.2s ease-in;
+		border-radius: 10px;
+	}
+
+	section[data-side=front] {
+		-webkit-transform: translateZ(100px);
+		        transform: translateZ(100px);
+	}
+	section[data-side=back] {
+		-webkit-transform: translateZ(-100px) rotateY(180deg);
+		        transform: translateZ(-100px) rotateY(180deg);
+	}
+	section[data-side=right] {
+		-webkit-transform: rotateY(-270deg) translateX(100px);
+		        transform: rotateY(-270deg) translateX(100px);
+		-webkit-transform-origin: top right;
+		        transform-origin: top right;
+	}
+	section[data-side=left] {
+		-webkit-transform: rotateY(270deg) translateX(-100px);
+		        transform: rotateY(270deg) translateX(-100px);
+		-webkit-transform-origin: center left;
+		        transform-origin: center left;
+	}
+	section[data-side=top] {
+		-webkit-transform: rotateX(-270deg) translateY(-100px);
+		        transform: rotateX(-270deg) translateY(-100px);
+		-webkit-transform-origin: top center;
+		        transform-origin: top center;
+	}
+	section[data-side=bottom] {
+		-webkit-transform: rotateX(270deg) translateY(100px);
+		        transform: rotateX(270deg) translateY(100px);
+		-webkit-transform-origin: bottom center;
+		        transform-origin: bottom center;
+	}
+
+	section>div{
+		position: absolute;
+		height: 100%;
+		width: 100%;
+	}
+	section::after, section::before, section>div::after, section>div::before {
+		content: '';
+		display: block;
+		border-radius: 50%;
+		width: 30px;
+		height: 30px;
+		background-color: black;
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		-webkit-transform: translate(-50%, -50%);
+		        transform: translate(-50%, -50%);
+		-webkit-backface-visibility: hidden;
+		        backface-visibility: hidden;
+	}
+
+	/*2*/
+	section[data-side=front]::after  { top: 25%; left: 25%; }
+	section[data-side=front]::before { top: 75%; left: 75%; }
+	/*5*/
+	section[data-side=back]::after      { top: 25%; left: 25%; }
+	section[data-side=back]::before     { top: 75%; left: 75%; }
+	section[data-side=back]>div:first-child::after  { top: 25%; left: 75%; }
+	section[data-side=back]>div:first-child::before { top: 75%; left: 25%; }
+	/*3*/
+	section[data-side=right]::after  { top: 25%; left: 25%; }
+	section[data-side=right]::before { top: 75%; left: 75%; }
+	/*4*/
+	section[data-side=left]::after      { top: 25%; left: 25%; }
+	section[data-side=left]::before     { top: 75%; left: 75%; }
+	section[data-side=left]>div:first-child::after  { top: 25%; left: 75%; }
+	section[data-side=left]>div:first-child::before { top: 75%; left: 25%; }
+	/*6*/
+	section[data-side=top]::after  { top: 25%; left: 25%; }
+	section[data-side=top]::before { top: 75%; left: 25%; }
+	section[data-side=top]>div:first-child::after  { top: 50%; left: 25%; }
+	section[data-side=top]>div:first-child::before { top: 25%; left: 75%; }
+	section[data-side=top]>div:last-child::after   { top: 75%; left: 75%; }
+	section[data-side=top]>div:last-child::before  { top: 50%; left: 75%; }
+	/*1*/
+	section[data-side=bottom]::after {
+		
+	}
+
+	@-webkit-keyframes rotate {
+		0%              { -webkit-transform: rotateX(   0deg )  rotateY(   0deg ) rotateZ(   0deg ); transform: rotateX(   0deg )  rotateY(   0deg ) rotateZ(   0deg ); }
+		16.666666667%   { -webkit-transform: rotateX(  90deg )  rotateY(   0deg ) rotateZ(   0deg ); transform: rotateX(  90deg )  rotateY(   0deg ) rotateZ(   0deg ); }
+		33.333333333%   { -webkit-transform: rotateX(  90deg )  rotateY(   0deg ) rotateZ(  90deg ); transform: rotateX(  90deg )  rotateY(   0deg ) rotateZ(  90deg ); }
+		50%             { -webkit-transform: rotateX( 180deg )  rotateY(   0deg ) rotateZ(  90deg ); transform: rotateX( 180deg )  rotateY(   0deg ) rotateZ(  90deg ); }
+		66.666666667%   { -webkit-transform: rotateX( 180deg )  rotateY(  90deg ) rotateZ(  90deg ); transform: rotateX( 180deg )  rotateY(  90deg ) rotateZ(  90deg ); }
+		83.333333333%   { -webkit-transform: rotateX( 180deg )  rotateY(  90deg ) rotateZ( 180deg ); transform: rotateX( 180deg )  rotateY(  90deg ) rotateZ( 180deg ); }
+		100%            { -webkit-transform: rotateX( 180deg )  rotateY( 180deg ) rotateZ( 180deg ); transform: rotateX( 180deg )  rotateY( 180deg ) rotateZ( 180deg ); }
+	}
+
+	@keyframes rotate {
+		0%              { -webkit-transform: rotateX(   0deg )  rotateY(   0deg ) rotateZ(   0deg ); transform: rotateX(   0deg )  rotateY(   0deg ) rotateZ(   0deg ); }
+		16.666666667%   { -webkit-transform: rotateX(  90deg )  rotateY(   0deg ) rotateZ(   0deg ); transform: rotateX(  90deg )  rotateY(   0deg ) rotateZ(   0deg ); }
+		33.333333333%   { -webkit-transform: rotateX(  90deg )  rotateY(   0deg ) rotateZ(  90deg ); transform: rotateX(  90deg )  rotateY(   0deg ) rotateZ(  90deg ); }
+		50%             { -webkit-transform: rotateX( 180deg )  rotateY(   0deg ) rotateZ(  90deg ); transform: rotateX( 180deg )  rotateY(   0deg ) rotateZ(  90deg ); }
+		66.666666667%   { -webkit-transform: rotateX( 180deg )  rotateY(  90deg ) rotateZ(  90deg ); transform: rotateX( 180deg )  rotateY(  90deg ) rotateZ(  90deg ); }
+		83.333333333%   { -webkit-transform: rotateX( 180deg )  rotateY(  90deg ) rotateZ( 180deg ); transform: rotateX( 180deg )  rotateY(  90deg ) rotateZ( 180deg ); }
+		100%            { -webkit-transform: rotateX( 180deg )  rotateY( 180deg ) rotateZ( 180deg ); transform: rotateX( 180deg )  rotateY( 180deg ) rotateZ( 180deg ); }
+	}
+
+	#cube>div {
+		-webkit-animation: rotate 4s infinite ease;
+		        animation: rotate 4s infinite ease;
+		/*transform: rotateX(   -30deg )  rotateY(   20deg ) rotateZ(   0deg );*/
+	}
+
+</style>
+<body>
+	<div id='cube'>
+		<div>
+			<section data-side="front"></section>
+			<section data-side="back"><div></div><div></div></section>
+			<section data-side="top"><div></div><div></div></section>
+			<section data-side="bottom"></section>
+			<section data-side="left"><div></div></section>
+			<section data-side="right"><div></div><div></div></section>
+		</div>
+	</div>
+</body>
+</html>

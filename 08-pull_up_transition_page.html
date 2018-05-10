@@ -1,0 +1,395 @@
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width" />
+<style>
+	*, *::before, *::after {
+	    margin: 0;
+	    padding: 0;
+	    box-sizing: border-box;
+	}
+	body{
+		height: 100%;
+		width: 100%;
+
+		background-color: black;
+
+		font-family: 'Roboto Slab', "Palatino Linotype", "Book Antiqua", Palatino, serif;
+		font-size: 17px;
+		font-weight: 100;
+		line-height: 1.35;
+		text-rendering: optimizeLegibility;
+		-webkit-font-smoothing: subpixel-antialiased;
+		letter-spacing: 0.05em;
+	}
+	h1{
+		position: relative;
+		z-index: 6;
+		font-weight: 800;
+		font-size: 40px;
+		line-height: 50vh;
+		color: #EDECE7;
+		/*background-color: rgba(0,0,0,.3);*/
+		transition: all 1s;
+	}
+	article.next h1{
+		background-color: rgba(0,0,0,0);
+	}
+	article.fade-in h1{
+		/*background-color: rgba(0,0,0,.3);*/
+	}
+
+	h1, hr{
+		text-transform: capitalize;
+		text-align: center;
+	}
+	hr{
+		border: none;
+		line-height: 33.333vh;
+	}
+	hr::after{
+		content: "***";
+	}
+	p{
+		white-space: pre-line;
+		padding: 2rem 0 0 0;
+	}
+	h1+p, hr+p{
+		margin-top: 0;
+	}
+
+
+	article{
+		position: relative;
+		/*background-color: rgba(0,0,0,.5);*/
+		/*background-color: green;*/
+	}
+	article main{
+		background-color: #EDECE7;
+		padding: 0 0 50vh;
+	}
+	article main p{
+		max-width: 600px;
+		margin-right: auto;
+		margin-left: auto;
+	}
+	.bg{
+		position: absolute;
+
+		background-size: cover;
+		background-position: 50% 50%;
+
+		top: 0;
+		left: 0;
+		z-index: -9999999999999;
+
+		height: 50vh;
+		width: 100vw;
+
+		transition: all 1s;
+	}
+	article.current .bg, article.next.fade-in .bg{
+		-webkit-filter: sepia(0) saturate(1.3) brightness(.8);
+		background-position: 50% 50%;
+	}
+	article.next .bg{
+		-webkit-filter: sepia(.5) saturate(.5);
+		background-position: 50% 75%;
+	}
+
+	article.current.fade-out{
+		transition: all 1s ease;
+		-webkit-transform: translate3d(0,50vh,0);
+		opacity: .5;
+	}
+	article.current main::before, article.current main::after{
+		opacity: 0;
+		transition: all .5s ease;
+		position: absolute;
+		bottom: 0;
+
+		font-weight: 100;
+		text-align: center;
+		width: 100vw;
+
+	}
+	article.current main::before{
+		content: "Scroll down to load next article.";
+		margin-bottom: 12rem;
+	}
+	article.current main::after{
+		content: "↓";
+		margin-bottom: 10rem;
+	}
+	article.current main.not-loading::before, article.current main.not-loading::after, article.current main.loading::before, article.current main.loading::after{
+		opacity: .5;
+	}
+	article.current main.loading::before, article.current.fade-out main::before{
+		content: "Scroll up to remain on this page.";
+		-webkit-transform: translate3d(0,2rem,0);
+	}
+	article.current main.loading::after, article.current.fade-out main::after{
+		-webkit-transform: rotate(180deg) translate3d(0,2rem,0);
+	}
+
+
+	article.next{
+		height: 50vh;
+		overflow: hidden;
+
+		cursor: pointer;
+	}
+	article.next.fade-in{
+		height: auto;
+		overflow: visible;
+		transition: all 1s ease;
+		-webkit-transform: translate3d(0,-50vh,0);
+	}
+
+
+	article::before{
+		display: none;
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: -1;
+		background: linear-gradient(to right, rgba(0,0,0,0) 50%,rgba(0,0,0,1) 100%);
+		opacity: .5;
+		-webkit-transform: translate3d(-100%,0,0);
+	}
+	article.next.loading::before{
+		transition: all 3s linear;
+		-webkit-transform: translate3d(0,0,0);
+	}
+	article.next.loading.fade-in::before{
+		transition: all 1s linear;
+		-webkit-transform: translate3d(0,0,0);
+		opacity: 0;
+	}
+
+	.loader {
+		text-align: left;
+		width: 10rem;
+		height: 10rem;
+		position: absolute;
+		z-index: -5;
+		left: 50%;
+		top: 50%;
+		opacity: 0;
+		clip: rect(-5rem, 5rem, 5rem, 0);
+	}
+	.loader::before, .loader::after{
+		content: "";
+		position: absolute;
+		z-index: -5;
+		left: -5rem;
+		top: -5rem;
+		width: 10rem;
+		height: 10rem;
+		border: 2rem solid #EDECE7;
+		border-radius: 50%;
+		clip: rect(0, 5rem, auto, 0);
+	}
+
+	article.next .loader{
+		opacity: 0;
+	}
+	article.next.loading .loader {
+		transition: clip 0 1.5s, opacity 0s;
+		clip: rect(-5rem, 5rem, 5rem, -5rem);
+		opacity: .5;
+	}
+	article.next.loading.fade-in .loader{
+		transition: opacity 1s;
+		opacity: 0;
+	}
+	article.next.loading .loader::before {
+		-webkit-animation: left-spin 3s linear forwards;
+	}
+	article.next.loading .loader::after {
+		-webkit-animation: right-spin 3s linear forwards;
+	}
+	@-webkit-keyframes right-spin {
+		0% {
+			-webkit-transform: rotate(0deg);
+		}
+		50%, 100% {
+			-webkit-transform: rotate(180deg);
+		}
+	}
+	@-webkit-keyframes left-spin {
+		0% {
+			-webkit-transform: rotate(0deg);
+		}
+		100% {
+			-webkit-transform: rotate(360deg);
+		}
+	}
+
+	@media only screen and (orientation : portrait) {
+		h1{
+			font-size: 1.5rem;
+		}
+		p{
+			padding: 2rem 1rem 0;
+		}
+	}
+</style>
+
+
+<article class="current">
+	<div class="bg" style="background-image: url(img/bg-5.jpg);"></div>
+	<h1>This Article 1 Has A Title<span class="loader"></span></h1>
+	<main>
+		<p>The use of movable type solidified this preference from a technological point of view. It was much easier to handle and make emendations to large amounts of type that had words or syllables at the ends of lines than it was to respace the ends of lines.
+		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		— “Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.”
+		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<hr/>
+		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>— “Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.”
+		— “Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.”
+		— “Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.”
+		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+	</main>
+</article>
+
+<article class="next">
+	<div class="bg" style="background-image: url(img/bg-2.jpg)"></div>
+	<h1>Article 2 Is Interesting<span class="loader"></span></h1>
+	<main>
+		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		— “Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.”
+		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<hr/>
+		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>— “Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.”
+		— “Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.”
+		— “Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.”
+		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+	</main>
+</article>
+
+<script>
+	var body = document.body,
+	    html = document.documentElement;
+	var documentHeight = Math.max( body.scrollHeight, body.offsetHeight,
+	                       html.clientHeight, html.scrollHeight, html.offsetHeight );
+
+	var scrollAnim = function (endLocation) {
+		var timeLapsed = 0;
+		var percentage, position;
+		var animateScroll = function () {
+			timeLapsed += 16;
+			percentage = ( .5*timeLapsed / Math.abs(endLocation - window.pageYOffset) );
+			percentage = ( percentage > 1 ) ? 1 : percentage;
+			position = window.pageYOffset + ( (endLocation - window.pageYOffset) * (percentage) );
+			window.scrollTo( 0, position );
+			var currentLocation = window.pageYOffset;
+			if ( position == endLocation || currentLocation == endLocation || ( (window.innerHeight + currentLocation) >= document.body.scrollHeight ) ) {
+				clearInterval(runAnimation);
+			}
+		};
+		var runAnimation = setInterval(animateScroll, 16);
+	};
+
+	document.querySelector('article.next').onclick = next_article;
+
+	function next_article () {
+		clearInterval(next_page_timer);
+		document.querySelector('article.current').className = "current fade-out";
+		document.querySelector('article.next').className = "next loading fade-in";
+		disable_scroll();
+		setTimeout(function () {
+			var old_article = document.querySelector('article.fade-out');
+			old_article.parentNode.removeChild(old_article);
+			old_article.className = "next";
+			document.querySelector('article.fade-in').className = "current fade-in";
+			document.body.appendChild(old_article);
+			window.scroll(0,0);
+			enable_scroll();
+			document.querySelector('article.current').onclick = null;
+			document.querySelector('article.next').onclick = next_article;
+		}, 1000);
+	}
+
+	var scroll_left_alone;
+	var next_page_timer;
+	var previousPageYOffset;
+	var scroll_direction_down;
+	window.onscroll = function (event) {
+
+		//scroll direction
+		scroll_direction_down = !(previousPageYOffset>window.pageYOffset)
+		previousPageYOffset = window.pageYOffset;
+
+		//class naming (next)
+		if(window.pageYOffset>=documentHeight - window.innerHeight){
+			document.querySelector('article.next').className = "next loading";
+			clearInterval(next_page_timer);
+			next_page_timer = setTimeout(function () {
+				next_article();
+			}, 3000);
+		}
+		else{
+			document.querySelector('article.next').className = "next";
+			clearInterval(next_page_timer);
+		}
+
+		//class naming (current)
+		if(window.pageYOffset>=documentHeight - window.innerHeight*1.25 && scroll_direction_down || window.pageYOffset>=documentHeight - window.innerHeight - 1)
+			document.querySelector('article.current main').className = "loading";
+		else if(window.pageYOffset>=documentHeight - window.innerHeight*1.55)
+			document.querySelector('article.current main').className = "not-loading";
+		else
+			document.querySelector('article.current main').className = "";
+
+		//snap
+		clearInterval(scroll_left_alone);
+		scroll_left_alone = setTimeout(function () {
+			if(scroll_direction_down){
+				if(window.pageYOffset>=documentHeight - window.innerHeight*1.25)
+					scrollAnim(documentHeight);
+			}
+			else if(window.pageYOffset>=documentHeight - window.innerHeight*1.5 && window.pageYOffset<documentHeight - window.innerHeight*1)
+					scrollAnim(documentHeight - window.innerHeight*1.5-1);
+		}, 100);
+
+	}
+
+
+	//scroll disable http://stackoverflow.com/questions/4770025/how-to-disable-scrolling-temporarily
+	var keys = [37, 38, 39, 40];
+	function preventDefault(e) {
+	  e = e || window.event;
+	  if (e.preventDefault)
+	      e.preventDefault();
+	  e.returnValue = false;
+	}
+	function keydown(e) {
+	    for (var i = keys.length; i--;) {
+	        if (e.keyCode === keys[i]) {
+	            preventDefault(e);
+	            return;
+	        }
+	    }
+	}
+	function wheel(e) {
+	  preventDefault(e);
+	}
+	function disable_scroll() {
+	  if (window.addEventListener) {
+	      window.addEventListener('DOMMouseScroll', wheel, false);
+	  }
+	  window.onmousewheel = document.onmousewheel = wheel;
+	  document.onkeydown = keydown;
+	}
+	function enable_scroll() {
+	    if (window.removeEventListener) {
+	        window.removeEventListener('DOMMouseScroll', wheel, false);
+	    }
+	    window.onmousewheel = document.onmousewheel = document.onkeydown = null;
+	}
+</script>
+<link href='http://fonts.googleapis.com/css?family=Roboto+Slab:300' rel='stylesheet' type='text/css'>

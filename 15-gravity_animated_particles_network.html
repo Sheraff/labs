@@ -1,0 +1,160 @@
+<style>
+	*,
+	*::before,
+	*::after {
+	  margin: 0;
+	  padding: 0;
+	  -webkit-box-sizing: border-box;
+	  -moz-box-sizing: border-box;
+	  box-sizing: border-box;
+	}
+	body {
+	  height: 100%;
+	  width: 100%;
+	  font-size: 15px;
+	  font-weight: 100;
+	  text-rendering: optimizeLegibility;
+	  -webkit-font-smoothing: subpixel-antialiased;
+	  letter-spacing: 0.075em;
+	  font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+	}
+	canvas{
+		background-color: black;
+	}
+</style>
+<canvas></canvas>
+<script>
+	var canvas = document.getElementsByTagName('canvas')[0];
+	var width = window.innerWidth;
+	var height = window.innerHeight;
+	canvas.setAttribute("width", width);
+	canvas.setAttribute("height", height);
+	var ctx = canvas.getContext("2d");
+	ctx.font = "15px 'Palatino Linotype'";
+	ctx.textAlign = 'center';
+	ctx.fillStyle = "#ffffff";
+	ctx.strokeStyle="#777777";
+	ctx.clearRect(0, 0, width, height);
+
+	// SETUP
+	GRAVITY_CLIP = 100;
+	PARTICLES_COUNT = width*height/4200;
+	GRAVITY_CONSTANT = 10;
+
+	//MAIN
+	var mouse_particle;
+	canvas.addEventListener('mousemove', function (event) {
+		if(!mouse_particle){
+			mouse_particle = {
+				"size": 100,
+				"position": {
+					"x": 0,
+					"y": 0
+				},
+				"vector": {
+					"x": 0,
+					"y": 0
+				}
+			};
+		}
+		mouse_particle.position.x = event.pageX;
+		mouse_particle.position.y = event.pageY;
+	});
+
+	var particles = [];
+	for (var i = PARTICLES_COUNT; i >= 0; i--) {
+		var temp_particule = new particle(canvas);
+		temp_particule.size = Math.max(1, Math.pow(Math.random(),5) * 10)
+		particles.push(temp_particule);
+	};
+	step();
+
+	function particle (canvas) {
+		var world = {
+			"canvas": canvas,
+			"context": canvas.getContext("2d"),
+			"width": canvas.getBoundingClientRect().width,
+			"height": canvas.getBoundingClientRect().height,
+			"speed": [.1, 1],
+			"angular": [-.01, .01],
+			"max": GRAVITY_CLIP
+		}
+		this.size = .1;
+		this.color = '#'+Math.floor(Math.random()*150+100).toString(16)+Math.floor(Math.random()*150+100).toString(16)+Math.floor(Math.random()*150+100).toString(16);
+		this.position = {
+			"x": Math.random() * world.width,
+			"y": Math.random() * world.height
+		};
+		var speed = Math.random() * (world.speed[1] - world.speed[0]) + world.speed[0];
+		var angle = Math.random()*2;
+		this.vector = {
+			"x": Math.cos(angle * Math.PI) * speed,
+			"y": Math.sin(angle * Math.PI) * speed
+		}
+
+		this.step = function () {
+			this.size += .005;
+			this.position.x += this.vector.x;
+			this.position.y += this.vector.y;
+			return this.position.x > -world.max && this.position.x < world.width+world.max && this.position.y > -world.max && this.position.y < world.height+world.max;
+		}
+		this.draw = function () {
+			world.context.fillStyle = this.color || "#ffffff";
+			world.context.beginPath();
+			world.context.arc(this.position.x, this.position.y, this.size/2, 0, Math.PI*2);
+			world.context.closePath();
+			world.context.fill();
+		}
+	}
+
+	function distance (a, b) {
+		return Math.sqrt( Math.pow(a.position.x - b.position.x, 2) + Math.pow(a.position.y - b.position.y, 2) );
+	}
+	function angle (a, b){
+		return Math.atan( (b.position.y - a.position.y) / (b.position.x - a.position.x) );
+	}
+	function connect (a, b, dist) {
+		var dist = dist || distance(a, b);
+		if( dist < GRAVITY_CLIP ){
+			if(a.size>b.size && a.color) b.color = a.color;
+			else if(b.color) a.color = b.color;
+			ctx.beginPath();
+			ctx.lineWidth = Math.min(1, 4 * GRAVITY_CLIP / Math.pow(dist, 2));
+			ctx.moveTo(a.position.x, a.position.y);
+			ctx.lineTo(b.position.x, b.position.y);
+			ctx.stroke();
+		}
+	}
+	function attract (a, b, dist) {
+		var dist = dist || distance(a, b);
+		if( dist < GRAVITY_CLIP ){
+			var xGravity = GRAVITY_CONSTANT * .0001 * a.size*b.size * Math.abs(a.position.x - b.position.x) / (dist*dist*(a.size+b.size));
+			a.vector.x += xGravity * (a.position.x > b.position.x ? -1 : 1) * b.size;
+			b.vector.x += xGravity * (b.position.x > a.position.x ? -1 : 1) * a.size;
+			var yGravity = GRAVITY_CONSTANT * .0001 * a.size*b.size * Math.abs(a.position.y - b.position.y) / (dist*dist*(a.size+b.size));
+			a.vector.y += yGravity * (a.position.y > b.position.y ? -1 : 1) * b.size;
+			b.vector.y += yGravity * (b.position.y > a.position.y ? -1 : 1) * a.size;
+		}
+	}
+
+	function step () {
+		ctx.clearRect(0, 0, width, height);
+		window.requestAnimationFrame(step);
+		for (var i = particles.length - 1; i >= 0; i--) {
+			if(particles[i].step()){
+				for (var j = i - 1; j >= 0; j--) {
+					var temp_dist = distance(particles[j], particles[i]);
+					connect(particles[j], particles[i], temp_dist);
+					attract(particles[j], particles[i], temp_dist);
+				};
+				if(mouse_particle){
+					connect(particles[i], mouse_particle);
+					attract(particles[i], mouse_particle);
+				}
+				particles[i].draw()
+			} else
+				particles[i] = new particle(canvas);
+		};
+	}
+
+</script>

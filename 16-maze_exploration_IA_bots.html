@@ -1,0 +1,472 @@
+<style>
+	*,
+	*::before,
+	*::after {
+	  margin: 0;
+	  padding: 0;
+	  -webkit-box-sizing: border-box;
+	  -moz-box-sizing: border-box;
+	  box-sizing: border-box;
+	}
+	body {
+	  height: 100%;
+	  width: 100%;
+	  background-color: black;
+	}
+	canvas{
+		position: absolute;
+		left: 0;
+		top: 0;
+		/*background-color: black;*/
+	}
+	canvas#map{
+		z-index: 10;
+	}
+	canvas#dynamic{
+		z-index: 1;
+	}
+</style>
+<body></body>
+<script>
+
+	// parameters
+	MAP_SIDE_Y = 7;
+
+	// other globals
+	WIDTH = window.innerWidth;
+	HEIGHT = window.innerHeight;
+	MAP_SIDE_X = Math.round(MAP_SIDE_Y * WIDTH/HEIGHT);
+	CELL_WIDTH = (WIDTH / MAP_SIDE_X);
+	CELL_HEIGHT = (HEIGHT / MAP_SIDE_Y);
+
+	CONTEXT = init_canvas('map');
+
+	MAP = grid_of_ones(MAP_SIDE_X*2+1, MAP_SIDE_Y*2+1);
+	this_cell_is_path([1, 1], Math.random()<.5?[1, 3]:[3, 1]);
+
+	CONTEXT.beginPath();
+	for (var i = MAP.length - 1; i >= 0; i--) {
+		for (var j = MAP[i].length - 1; j >= 0; j--) {
+			if(MAP[i][j] === 1){
+				if(MAP[i] && MAP[i][j-1] && MAP[i][j-1] === 1){
+					draw_wall(i, i, j, j-1)
+				}
+				if(MAP[i-1] && MAP[i-1][j] && MAP[i-1][j] === 1){
+					draw_wall(i, i-1, j, j);
+				}
+			}
+		};
+	};
+	CONTEXT.stroke();
+
+	MOUSE = {"x":0,"y":0};
+	window.addEventListener('mousemove', function (event) {
+		MOUSE.x = event.pageX;
+		MOUSE.y = event.pageY;
+	})
+
+	CONTEXT = init_canvas('dynamic');
+
+	OBJECTS = [];
+	var my_robot = new robot();
+	my_robot.sensors.camera.angle = Math.PI / 4;
+	// my_robot.sensors.camera.range = 30;
+	my_robot.body.capacities.angular.acceleration += .01
+	my_robot.body.capacities.vector.acceleration  += .1
+	my_robot.body.capacities.angular.top_speed += .02
+	OBJECTS.push(my_robot);
+	var my_robot = new robot();
+	my_robot.sensors.camera.angle = Math.PI / 1.3;
+	my_robot.sensors.camera.precision = 20;
+	my_robot.sensors.camera.range += 20;
+	my_robot.body.capacities.vector.acceleration  = .03
+	OBJECTS.push(my_robot);
+	OBJECTS.push(new robot());
+
+	(function loop(){
+		CONTEXT.clearRect(0, 0, WIDTH, HEIGHT);
+		window.requestAnimationFrame(loop);
+		var dead = [];
+		for (var i = OBJECTS.length - 1; i >= 0; i--) {
+			if(!OBJECTS[i].step()){
+				dead.push(i);
+			}
+		};
+		for (var i = 0, l = dead.length; i < l; i++) {
+			OBJECTS.splice(dead[i]);
+		};
+	})();
+
+	function bullet(x, y, angle, color) {
+		this.x = x;
+		this.y = y;
+		this.angle = angle;
+		this.color = color;
+
+		var speed = 5;
+		var size = 3;
+
+		this.step = function () {
+			this.x += Math.cos(this.angle) * speed;
+			this.y += Math.sin(this.angle) * speed;
+
+			var on_square = [Math.floor(this.x / CELL_WIDTH), Math.floor(this.y / CELL_HEIGHT)];
+			var in_square = [this.x % CELL_WIDTH, this.y % CELL_HEIGHT];
+			var temp_x = in_square[0] + speed * Math.cos(this.angle);
+			var temp_y = in_square[1] + speed * Math.sin(this.angle);
+			var in_front = MAP[on_square[0]*2+1 + (temp_x > CELL_WIDTH ? 1 : temp_x < 0 ? -1 : 0)][on_square[1]*2+1 + (temp_y > CELL_HEIGHT ? 1 : temp_y < 0 ? -1 : 0)]
+
+			this.draw();
+
+			if(in_front !== 0)
+				return false;
+
+			return true;
+		}
+
+		this.draw = function () {
+			CONTEXT.fillStyle='rgba('+this.color[0]+','+this.color[1]+','+this.color[2]+',1)';
+			CONTEXT.beginPath();
+			CONTEXT.arc(this.x, this.y, size, 0, Math.PI*2);
+			CONTEXT.closePath();
+			CONTEXT.fill();
+		}
+
+	}
+
+	function robot(name){
+		this.name = name || randomName();
+		this.color = [Math.floor(Math.random()*55+200), Math.random()<.5?Math.floor(Math.random()*55+200):0, Math.random()<.5?Math.floor(Math.random()*55+200):0];
+
+		this.body = {};
+		this.body.x = Math.floor(Math.random() * MAP_SIDE_X) * CELL_WIDTH + CELL_WIDTH/2 - 20;
+		this.body.y = Math.floor(Math.random() * MAP_SIDE_Y) * CELL_HEIGHT + CELL_HEIGHT/2 + 30;
+		// this.body.angle = [0,.5,1,1.5][Math.floor(Math.random()*4)] * Math.PI;
+		this.body.angle = Math.random()*2 * Math.PI;
+		this.body.speed = 0;
+		this.body.angular_speed = 0;
+
+		this.body.capacities = {
+			"vector": {
+				"acceleration": .1,
+				"top_speed": 3,
+				"deceleration": .5
+			},
+			"angular": {
+				"acceleration": .002,
+				"top_speed": .04,
+				"deceleration": .0005
+			}
+		}
+
+		this.sensors = {};
+		this.sensors.camera = {};
+		this.sensors.camera.range = Math.sqrt((CELL_WIDTH*CELL_WIDTH + CELL_HEIGHT*CELL_HEIGHT)/4);
+		this.sensors.camera.angle = Math.PI / 2;
+		this.sensors.camera.side = this.sensors.camera.range / Math.cos(this.sensors.camera.angle / 2);
+		this.sensors.camera.precision = 10;
+
+		this.brain = {};
+		// this.brain.memory = undefined;
+		this.brain.actions = {
+			"move": {},
+			"brake": {},
+			"turn": {}
+		};
+
+		function randomName() {
+			var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-';
+		    var name = '';
+		    for (var i = 5; i > 0; --i) name += chars[Math.round(Math.random() * (chars.length - 1))];
+		    return name;
+		}
+
+		this.draw = function (in_front) {
+
+
+			var grd=CONTEXT.createLinearGradient(this.body.x,this.body.y,this.body.x+(this.sensors.camera.range+10)*Math.cos(this.body.angle),this.body.y+(this.sensors.camera.range+10)*Math.sin(this.body.angle));
+			grd.addColorStop(0,'rgba('+this.color[0]+','+this.color[1]+','+this.color[2]+',1)');
+			grd.addColorStop(1,'rgba('+this.color[0]+','+this.color[1]+','+this.color[2]+',0)');
+
+			CONTEXT.fillStyle=grd;
+			CONTEXT.beginPath();
+			CONTEXT.moveTo(this.body.x, this.body.y);
+			for (var i = in_front.measurments.length - 1; i >= 0; i--) {
+				CONTEXT.lineTo(this.body.x + (in_front.measurments[i].d===0?this.sensors.camera.range:in_front.measurments[i].d) * Math.cos(in_front.measurments[i].angle), this.body.y + (in_front.measurments[i].d===0?this.sensors.camera.range:in_front.measurments[i].d) * Math.sin(in_front.measurments[i].angle));
+			};
+			CONTEXT.closePath();
+			CONTEXT.fill();
+
+			// CONTEXT.beginPath();
+			// CONTEXT.moveTo(this.body.x, this.body.y);
+			// CONTEXT.lineTo(this.body.x + this.sensors.camera.side * Math.cos(this.body.angle - this.sensors.camera.angle/2), this.body.y + this.sensors.camera.side * Math.sin(this.body.angle - this.sensors.camera.angle/2));
+			// CONTEXT.lineTo(this.body.x + this.sensors.camera.side * Math.cos(this.body.angle + this.sensors.camera.angle/2), this.body.y + this.sensors.camera.side * Math.sin(this.body.angle + this.sensors.camera.angle/2));
+			// CONTEXT.closePath();
+			// CONTEXT.fill();
+
+			CONTEXT.fillStyle="white";
+			CONTEXT.beginPath();
+			CONTEXT.arc(this.body.x, this.body.y, 7, 0, Math.PI*2);
+			CONTEXT.closePath();
+			CONTEXT.fill();
+
+		}
+
+		this.look = function () {
+			var on_square = [Math.floor(this.body.x / CELL_WIDTH), Math.floor(this.body.y / CELL_HEIGHT)];
+			var in_square = [this.body.x % CELL_WIDTH, this.body.y % CELL_HEIGHT];
+			var in_front = { "left":null, "front":null, "right":null};
+
+			function distance_to_wall(temp_x, temp_y, angle){
+				angle = angle % (Math.PI*2);
+				if(angle < 0) angle+=Math.PI*2;
+
+				// inner square
+				if(temp_x > CELL_WIDTH && ((angle < Math.atan((CELL_HEIGHT-in_square[1])/(CELL_WIDTH-in_square[0]))) || (Math.abs(angle-Math.PI*2) < Math.atan(in_square[1]/(CELL_WIDTH-in_square[0]))))){
+					if(MAP[on_square[0]*2+2][on_square[1]*2+1] === 1) return Math.abs((CELL_WIDTH-in_square[0]) / Math.cos(angle)); // RIGHT
+				} else if((temp_x < 0) && (angle < (Math.atan(in_square[1]/in_square[0])+Math.PI)) && (angle > (Math.PI - Math.atan((CELL_HEIGHT-in_square[1])/in_square[0])))){
+					if(MAP[on_square[0]*2][on_square[1]*2+1] === 1) return Math.abs(in_square[0] / Math.cos(Math.PI - angle)); // LEFT
+				} else if(temp_y < 0 && angle < (Math.atan((CELL_WIDTH-in_square[0])/in_square[1])+3*Math.PI/2) && angle > (3*Math.PI/2-Math.atan(in_square[0]/in_square[1]))){
+					if(MAP[on_square[0]*2+1][on_square[1]*2] === 1) return Math.abs(in_square[1] / Math.sin(2*Math.PI - angle)); // TOP
+				} else if(temp_y > CELL_HEIGHT && angle > Math.PI/2 - Math.atan((CELL_WIDTH-in_square[0])/(CELL_HEIGHT-in_square[1])) && angle < Math.PI/2 + Math.atan(in_square[0]/(CELL_HEIGHT-in_square[1]))){
+					if(MAP[on_square[0]*2+1][on_square[1]*2+2] === 1) return Math.abs((CELL_HEIGHT-in_square[1]) / Math.sin(angle)); // BOTTOM
+				}
+
+				// outer squares
+				if(temp_x > CELL_WIDTH && temp_y > CELL_HEIGHT){ // bottom right
+					if(angle>Math.atan((CELL_HEIGHT-in_square[1])/(2*CELL_WIDTH-in_square[0])) && angle<Math.atan((CELL_HEIGHT-in_square[1])/(CELL_WIDTH-in_square[0]))){
+						if(MAP[on_square[0]*2+3][on_square[1]*2+2] === 1) return Math.abs((CELL_HEIGHT-in_square[1]) / Math.sin(angle)); // horizontal
+					} else if(angle>Math.atan((CELL_HEIGHT-in_square[1])/(CELL_WIDTH-in_square[0])) && angle<Math.atan((2*CELL_HEIGHT-in_square[1])/(CELL_WIDTH-in_square[0]))){
+						if(MAP[on_square[0]*2+2][on_square[1]*2+3] === 1) return Math.abs((CELL_WIDTH-in_square[0]) / Math.cos(angle)); // vertical
+					}
+				} else if(temp_x < 0 && temp_y > CELL_HEIGHT){ // bottom left
+					if(angle>Math.PI - Math.atan((2*CELL_HEIGHT-in_square[1])/in_square[0]) && angle<Math.PI - Math.atan((CELL_HEIGHT-in_square[1])/in_square[0])){
+						if(MAP[on_square[0]*2][on_square[1]*2+3] === 1) return Math.abs((in_square[0]) / Math.cos(Math.PI - angle)); // vertical
+					} else if(angle>Math.PI - Math.atan((CELL_HEIGHT-in_square[1])/in_square[0]) && angle<Math.PI - Math.atan((CELL_HEIGHT-in_square[1])/(CELL_WIDTH+in_square[0]))){
+						if(MAP[on_square[0]*2-1][on_square[1]*2+2] === 1) return Math.abs((CELL_HEIGHT-in_square[1]) / Math.cos(angle - Math.PI / 2)); // horizontal
+					}
+				} else if(temp_x < 0 && temp_y < 0){ // top left
+					if(angle>Math.PI + Math.atan(in_square[1]/(CELL_WIDTH+in_square[0])) && angle<Math.PI + Math.atan(in_square[1]/in_square[0])){
+						if(MAP[on_square[0]*2-1][on_square[1]*2] === 1) return Math.abs((in_square[1]) / Math.sin(angle - Math.PI)); // horizontal
+					} else if(angle>Math.PI + Math.atan(in_square[1]/in_square[0]) && angle<Math.PI + Math.atan((CELL_HEIGHT+in_square[1])/in_square[0])){
+						if(MAP[on_square[0]*2][on_square[1]*2-1] === 1) return Math.abs(in_square[0] / Math.cos(angle - Math.PI)); // vertical
+					}
+				} else if(temp_x > CELL_WIDTH && temp_y < 0){ // top right
+					if(angle>3*Math.PI/2 + Math.atan((CELL_WIDTH-in_square[0])/(CELL_HEIGHT+in_square[1])) && angle<3*Math.PI/2 + Math.atan((CELL_WIDTH-in_square[0])/in_square[1])){
+						if(MAP[on_square[0]*2+2][on_square[1]*2-1] === 1) return Math.abs((CELL_WIDTH-in_square[0]) / Math.cos(angle)); // vertical
+					} else if(angle>3*Math.PI/2 + Math.atan((CELL_WIDTH-in_square[0])/in_square[1]) && angle<3*Math.PI/2 + Math.atan((2*CELL_WIDTH-in_square[0])/in_square[1])){
+						if(MAP[on_square[0]*2+3][on_square[1]*2] === 1) return Math.abs((in_square[1]) / Math.sin(-angle)); // horizontal
+					}
+				}
+
+				return 0;
+			}
+
+			// measurments
+			var measurments = [];
+			for (var i = 0; i <= this.sensors.camera.precision*2; i++) {
+				var temp_angle = this.body.angle + (i-this.sensors.camera.precision) * (this.sensors.camera.angle/2) / this.sensors.camera.precision
+				var temp_x = in_square[0] + this.sensors.camera.range * Math.cos(temp_angle);
+				var temp_y = in_square[1] + this.sensors.camera.range * Math.sin(temp_angle);
+
+				var inner_impact;
+				if(temp_x > CELL_WIDTH && temp_angle < Math.atan((CELL_HEIGHT-in_square[1])/(CELL_WIDTH-in_square[0])) && temp_angle-Math.PI*2 > Math.atan(in_square[1]/(CELL_WIDTH-in_square[0])))
+					inner_impact = "right";
+				else if(temp_x < 0 && temp_angle < Math.atan(in_square[1]/in_square[0])+Math.PI && temp_angle > Math.atan((CELL_HEIGHT-in_square[1])/in_square[0])+Math.PI);
+					inner_impact = "left";
+
+				var temp_measurement = distance_to_wall(temp_x, temp_y, temp_angle);
+				measurments.push({
+					"angle": temp_angle,
+					"d": temp_measurement
+				});
+				if(i===0) in_front.left = temp_measurement;
+				else if(i===this.sensors.camera.precision) in_front.front = temp_measurement;
+				else if(i===this.sensors.camera.precision*2) in_front.right = temp_measurement;
+			};
+			in_front.measurments = measurments;
+
+			// var temp_x = in_square[0] + this.sensors.camera.range * Math.cos(this.body.angle);
+			// var temp_y = in_square[1] + this.sensors.camera.range * Math.sin(this.body.angle);
+			// in_front.front = distance_to_wall(temp_x, temp_y, this.body.angle);
+
+			// temp_x = in_square[0] + this.sensors.camera.side * Math.cos(this.body.angle - this.sensors.camera.angle/2)
+			// temp_y = in_square[1] + this.sensors.camera.side * Math.sin(this.body.angle - this.sensors.camera.angle/2)
+			// in_front.left = distance_to_wall(temp_x, temp_y, this.body.angle - this.sensors.camera.angle/2);
+
+
+			// temp_x = in_square[0] + this.sensors.camera.side * Math.cos(this.body.angle + this.sensors.camera.angle/2)
+			// temp_y = in_square[1] + this.sensors.camera.side * Math.sin(this.body.angle + this.sensors.camera.angle/2)
+			// in_front.right = distance_to_wall(temp_x, temp_y, this.body.angle + this.sensors.camera.angle/2);
+
+
+			// if(in_front.right !== 0){
+			// 	CONTEXT.fillStyle="red";
+			// 	CONTEXT.beginPath();
+			// 	CONTEXT.arc(this.body.x + in_front.right*Math.cos(this.body.angle + this.sensors.camera.angle/2), this.body.y + in_front.right*Math.sin(this.body.angle + this.sensors.camera.angle/2), 4, 0, Math.PI*2);
+			// 	CONTEXT.closePath();
+			// 	CONTEXT.fill();
+			// }
+			// if(in_front.left !== 0){
+			// 	CONTEXT.fillStyle="red";
+			// 	CONTEXT.beginPath();
+			// 	CONTEXT.arc(this.body.x + in_front.left*Math.cos(this.body.angle - this.sensors.camera.angle/2), this.body.y + in_front.left*Math.sin(this.body.angle - this.sensors.camera.angle/2), 4, 0, Math.PI*2);
+			// 	CONTEXT.closePath();
+			// 	CONTEXT.fill();
+			// }
+			// if(in_front.front !== 0){
+			// 	CONTEXT.fillStyle="red";
+			// 	CONTEXT.beginPath();
+			// 	CONTEXT.arc(this.body.x + in_front.front*Math.cos(this.body.angle), this.body.y + in_front.front*Math.sin(this.body.angle), 4, 0, Math.PI*2);
+			// 	CONTEXT.closePath();
+			// 	CONTEXT.fill();
+			// }
+
+			// console.log(this.name + " is on square "+on_square[0]+","+on_square[1]+" at "+in_square[0]+","+in_square[1]);
+			// console.log("in front, there is "+((in_front.front === 1)?"a wall":"space"));
+			// console.log("on the right, there is "+((in_front.right === 1)?"a wall":"space"));
+			// console.log("on the left, there is "+((in_front.left === 1)?"a wall":"space"));
+
+			return in_front;
+		}
+
+		this.think = function (in_front) {
+
+			// should I move
+			if(in_front.front === 0){
+				// if(!this.brain.actions.move.switch) console.log("move");
+				this.brain.actions.move.switch = true;
+				this.brain.actions.move.direction = 1;
+			} else {
+				this.brain.actions.move.switch = false;
+			}
+
+			// should I turn
+			if(in_front.front !== 0){
+				// if(!this.brain.actions.turn.switch) console.log("turn");
+				this.brain.actions.turn.switch = true;
+				if(!this.brain.actions.turn.direction)
+					this.brain.actions.turn.direction = (in_front.left !== in_front.right) ? (in_front.left === 0 ? -1 : 1) : (Math.random()<.5 ? -1 : 1);
+			} else {
+				if((in_front.left === 0 || (this.brain.memory && this.brain.memory.in_front && this.brain.memory.in_front.left === 0)) && (in_front.right === 0 || (this.brain.memory && this.brain.memory.in_front && this.brain.memory.in_front.right === 0))){
+					this.brain.actions.turn.switch = false;
+					this.brain.actions.turn.direction = undefined;
+				} else if(in_front.left !== 0 && this.brain.memory && this.brain.memory.in_front && this.brain.memory.in_front.left === 0){
+					// if(!this.brain.actions.turn.switch) console.log("turn");
+					this.brain.actions.turn.switch = true;
+					this.brain.actions.turn.direction = -1;
+				} else if (in_front.right !== 0 && this.brain.memory && this.brain.memory.in_front && this.brain.memory.in_front.right === 0){
+					// if(!this.brain.actions.turn.switch) console.log("turn");
+					this.brain.actions.turn.switch = true;
+					this.brain.actions.turn.direction = 1;
+				} else {
+					this.brain.actions.turn.switch = false;
+					this.brain.actions.turn.direction = undefined;
+				}
+			}
+			// if(this.brain.actions.move.switch){
+			// 	this.brain.actions.turn.switch = false;
+			// 	this.brain.actions.turn.direction = undefined;
+			// }
+
+			// should I brake
+			if(in_front.front !== 0){
+				// if(!this.brain.actions.brake.switch) console.log("brake");
+				this.brain.actions.brake.switch = true;
+			} else {
+				this.brain.actions.brake.switch = false;
+			}
+
+			// act accordingly
+			if(this.brain.actions.move.switch)
+				this.body.speed += this.body.capacities.vector.acceleration * this.brain.actions.move.direction;
+			if(this.brain.actions.turn.switch){
+				this.body.angular_speed += this.body.capacities.angular.acceleration * this.brain.actions.turn.direction;
+			} else {
+				this.body.angular_speed += this.body.capacities.angular.deceleration * (this.body.angular_speed > 0 ? -1 : 1);
+			}
+			if(this.brain.actions.brake.switch)
+				this.body.speed -= this.body.capacities.vector.deceleration;
+			// if(in_front.front === 0 && Math.random()<.05)
+			// 	OBJECTS.push(new bullet(this.body.x, this.body.y, this.body.angle, this.color));
+
+			// remember
+			if(!this.brain.memory) this.brain.memory = {};
+			this.brain.memory.in_front = in_front;
+		}
+
+		this.actuate = function (in_front) {
+
+			this.body.speed = Math.max(0, Math.min(this.body.speed, this.body.capacities.vector.top_speed));
+			this.body.angular_speed = Math.max(-this.body.capacities.angular.top_speed, Math.min(this.body.angular_speed, this.body.capacities.angular.top_speed));
+			this.body.angle = (this.body.angle + this.body.angular_speed) % (2 * Math.PI);
+			this.body.x += Math.cos(this.body.angle) * this.body.speed;
+			this.body.y += Math.sin(this.body.angle) * this.body.speed;
+
+			// this.body.angle = Math.atan((MOUSE.y-this.body.y)/(MOUSE.x-this.body.x));
+			// if(MOUSE.x-this.body.x < 0) this.body.angle += Math.PI;
+
+			this.draw(in_front);
+		}
+
+		this.step = function () {
+			var in_front = this.look();
+			this.think(in_front);
+			this.actuate(in_front);
+			return true;
+		}
+	}
+
+	function draw_wall(x1, x2, y1, y2){
+		CONTEXT.moveTo((x1/2) * CELL_WIDTH + (x1>x2?1:x1<x2?-1:0), (y1/2) * CELL_HEIGHT + (y1>y2?1:y1<y2?-1:0));
+		CONTEXT.lineTo((x2/2) * CELL_WIDTH - (x1>x2?1:x1<x2?-1:0), (y2/2) * CELL_HEIGHT - (y1>y2?1:y1<y2?-1:0));
+	}
+
+	function this_cell_is_path (prev, cell) {
+		if(MAP[cell[0]] && MAP[cell[0]][cell[1]] && MAP[cell[0]][cell[1]] == 1){
+			MAP[(cell[0]+prev[0])/2][(cell[1]+prev[1])/2] = 0;
+			MAP[cell[0]][cell[1]] = 0;
+			var neighbors = [
+				[cell[0]+2, cell[1]],
+				[cell[0]-2, cell[1]],
+				[cell[0], cell[1]+2],
+				[cell[0], cell[1]-2]
+			].sort(function() {
+				return .5 - Math.random();
+			});
+			for (var i = neighbors.length - 1; i >= 0; i--) {
+				this_cell_is_path(cell, neighbors[i])
+			};
+		}
+	}
+
+	function grid_of_ones (x, y) {
+		var grid = [];
+		for (var i = 0; i < x; i++) {
+			grid[i] = [];
+			for (var j = 0; j < y; j++) {
+				grid[i][j] = 1;
+			};
+		};
+		return grid;
+	}
+
+	function init_canvas(name){
+		var canvas = document.createElement('canvas');
+		canvas.setAttribute('id', name);
+		canvas.setAttribute("width", WIDTH);
+		canvas.setAttribute("height", HEIGHT);
+		document.body.appendChild(canvas);
+		var ctx = canvas.getContext("2d");
+		ctx.fillStyle = "rgba(0,0,0,0)";
+		ctx.clearRect(0, 0, WIDTH, HEIGHT);
+		ctx.fillStyle = "#ffffff";
+		ctx.strokeStyle="#ffffff";
+		ctx.lineWidth = 3;
+		return ctx;
+	}
+
+
+
+
+</script>

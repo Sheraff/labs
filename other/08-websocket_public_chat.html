@@ -1,0 +1,219 @@
+<style>
+body {
+	margin: 0;
+	height: 100%;
+}
+header {
+	/*padding: .26em;*/
+}
+input {
+	width: 50vw;
+}
+[data-id]:not([data-name])::before{
+	content: attr(data-id) ": "
+}
+[data-name]::before{
+	content: attr(data-name) ": "
+}
+main {
+	height: calc(100% - 2em);
+	width: 100vw;
+	display: block;
+	background-color: black;
+	overflow: scroll;
+	white-space: pre-line;
+	padding: 1em;
+	color: green;
+	font-family: Courier New;
+	font-weight: 400;
+	-webkit-font-smoothing: none;
+}
+span {
+	position: relative;
+	left: 2rem;
+	top: .25rem;
+	transition: opacity .5s;
+	opacity: 0;
+}
+span.loading {
+	opacity: 1;
+}
+span::before, span::after {
+	content:"";
+	position: absolute;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 50%;
+}
+span::before {
+	background-color: orange;
+	box-shadow: 0 0 1px orange;
+	-webkit-animation: ld3-sq1 1s linear infinite;
+}
+span::after {
+	background-color: SteelBlue;
+	box-shadow: 0 0 1px SteelBlue;
+	-webkit-animation: ld3-sq2 1s linear infinite;
+}
+@-webkit-keyframes ld3-sq1 {
+	0% {
+		-webkit-transform: translateX(-150%) scale(1);
+		z-index: 1;
+	}
+	25% {
+		-webkit-transform: translateX(0) scale(1.2);
+		z-index: 1;
+	}
+	50% {
+		-webkit-transform: translateX(150%) scale(1);
+		z-index: -1;
+	}
+	75% {
+		-webkit-transform: translateX(0) scale(.8);
+		z-index: -1;
+	}
+	100% {
+		-webkit-transform: translateX(-150%) scale(1);
+		z-index: -1;
+	}
+}
+@-webkit-keyframes ld3-sq2 {
+	0% {
+		-webkit-transform: translateX(150%) scale(1);
+		z-index: -1;
+	}
+	25% {
+		-webkit-transform: translateX(0) scale(.8);
+		z-index: -1;
+	}
+	50% {
+		-webkit-transform: translateX(-150%) scale(1);
+		z-index: -1;
+	}
+	75% {
+		-webkit-transform: translateX(0) scale(1.2);
+		z-index: 1;
+	}
+	100% {
+		-webkit-transform: translateX(150%) scale(1);
+		z-index: 1;
+	}
+}
+</style>
+
+<header>
+	<button>Send</button>
+	<input type="text" autofocus>
+	<span></span>
+</header>
+<main></main>
+
+<script>
+var loader = document.querySelector('span');
+var input = document.querySelector('input');
+var button = document.querySelector('button');
+var console = document.querySelector('main');
+var style = document.styleSheets[0];
+var id = false;
+input.onkeypress = function(e) {
+	if (!e) e = window.event;
+	var keyCode = e.keyCode || e.which;
+	if (keyCode == '13') {
+		send_text();
+		return false;
+	}
+}
+input.onblur = function() {
+	input.focus();
+}
+document.querySelector('button').onclick = function() {
+	send_text()
+}
+
+function local_alert(str) {
+	console.innerHTML += "<p class=\"system\">" + (new Date()) + ": " + str + "\n"
+}
+
+function new_message (id,str) {
+	console.innerHTML += "<p class=\"msg\" data-id=\""+id+"\">" + str + "\n"
+}
+
+function send_text() {
+	loader.className = "loading";
+	button.disabled = true;
+	input.disabled = true;
+	ws.send(input.value);
+}
+
+function add_CSS_for_user(id,rgb){
+	style.insertRule("[data-id='"+id+"']{color:rgb("+rgb+")}", style.cssRules.length);
+}
+
+var ws;
+
+function WebSocketTest() {
+	input.disabled = true;
+	loader.className = "loading";
+	local_alert("ws: Trying to connect...")
+	ws = new WebSocket("ws://vps62456.ovh.net:8080");
+	ws.onopen = function() {
+		loader.className = "";
+		input.disabled = false;
+		input.focus();
+		local_alert("ws: Connection successful");
+		// ws.send("Message to send");
+	};
+	ws.onmessage = function(event) {
+		loader.className = "";
+		input.disabled = false;
+
+		var json = JSON.parse(event.data);
+		switch(json.type){
+			case "first":
+				json.others.forEach(function (user) {
+					add_CSS_for_user(user.id,user.rgb)
+				})
+				add_CSS_for_user(json.id,json.rgb)
+				id = json.id;
+				break;
+			case "new":
+				add_CSS_for_user(json.id,json.rgb)
+				break;
+			case "msg":
+				if(json.id==id){
+					loader.className = "";
+					button.disabled = false;
+					input.disabled = false;
+					input.value = "";
+					input.focus();
+				}
+				new_message(json.id, json.msg)
+				break;
+			default:
+				break;
+		}
+
+
+	};
+	ws.onclose = function() {
+		// websocket is closed.
+		loader.className = "";
+		local_alert("ws: Connection is closed...");
+	};
+}
+WebSocketTest();
+
+
+
+
+
+
+
+function dump(obj) {
+	var out = '';
+	for (var i in obj) {
+		out += i + ": " + obj[i] + "\n";
+	}
+	local_alert("dump: " + out);
+}
+</script>

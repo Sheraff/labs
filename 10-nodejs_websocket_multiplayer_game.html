@@ -1,0 +1,419 @@
+<style>
+body {
+	margin: 0;
+	background-image: url(img/bg-8.png);
+	background-origin: 50% 50%;
+}
+#bg {
+	position: fixed;
+	top: 0;
+	left: 0;
+}
+input {
+	position: fixed;
+	top: -100px;
+}
+#counter {
+	position: fixed;
+	bottom: 2rem;
+	left: 1rem;
+	line-height: 0;
+	font-size: 20px;
+	font-family: Courier Std, Courier New, Courier
+}
+#counter.connected{
+	font-size: 70px;
+}
+#counter.connected::after {
+	font-size: 20px;
+	content:" connected";
+}
+.player {
+	display: block;
+	position: fixed;
+	border-radius: 50%;
+	transition: all .05s linear;
+}
+</style>
+
+<div id="bg"></div>
+<input onkeydown="keydown(event)" onkeyup="keyup(event)" onblur="lostFocus()" autofocus/>
+<span id="counter"></span>
+
+<script>
+////////////////
+//  FRONTEND  //
+////////////////
+
+window.onload = function() {
+	new Player(true);
+	startLoop(25);
+	// WebSocketBoot();
+	connection();
+}
+
+var simultaneous = 0;
+
+function counterUpdate(nb) {
+	simultaneous = nb;
+	document.getElementById('counter').innerHTML = nb;
+}
+
+function customLog(msg){
+	if(msg==""||msg==null||!msg)
+		document.getElementById('counter').className = "connected";
+	else{
+		console.log(msg);
+		document.getElementById('counter').innerHTML = msg;
+	}
+}
+
+
+/////////////////
+//  WEBSOCKET  //
+/////////////////
+
+var ws;
+var canSend = false;
+
+function connection() {
+	//test nodejs ws module run
+	customLog("connecting...")
+	var xmlhttp = new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function() {
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+			if(xmlhttp.responseText == "1"){
+				customLog("node ws server ON");
+				WebSocketBoot();
+			}
+			else{
+				launchNode();
+			}
+
+		}
+	}
+	xmlhttp.open("GET", "http://92.222.20.96/ecoute.php?p=wss08", true);
+	xmlhttp.send();
+}
+
+function launchNode () {
+	customLog("starting node ws server...")
+	var xmlhttp = new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function() {
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+			customLog("node ws server ON");
+			WebSocketBoot();
+		}
+	}
+	xmlhttp.open("GET", "http://92.222.20.96/launch.php?p=08-ws_server", true);
+	xmlhttp.send();
+}
+
+function WebSocketBoot() {
+	customLog("openning connection on port 8080...")
+	ws = new WebSocket("ws://vps62456.ovh.net:8080");
+	ws.onopen = function() {
+		startSending();
+		customLog();
+		console.log("open")
+		ws.send(JSON.stringify({
+			"type": "hi",
+			"rgb": localPlayer.rgb,
+			"vector": localPlayer.vector
+		}));
+	};
+	ws.onmessage = function(event) {
+		var json = JSON.parse(event.data);
+		// console.log("MSG! json.type: " + json.type)
+		switch (json.type) {
+			case "id":
+				localPlayer.id = json.id;
+				json.others.forEach(function(data) {
+					if (data.id != localPlayer.id) {
+						var newGuy = new Player();
+						newGuy.id = data.id
+						newGuy.setRGB(data.rgb);
+						newGuy.vector = data.vector
+					}
+				})
+				counterUpdate(json.nb)
+				break;
+			case "new":
+				if (json.id != localPlayer.id) {
+					var newGuy = new Player();
+					newGuy.id = json.id
+					newGuy.setRGB(json.rgb);
+					newGuy.vector = json.vector
+				}
+				counterUpdate(json.nb)
+				break;
+			case "old":
+				getPlayerById(json.id).selfDestruct();
+				counterUpdate(json.nb);
+				break;
+			case "keys":
+				if (json.id != localPlayer.id)
+					getPlayerById(json.id).keys = json.keys;
+				break;
+			case "xy":
+				if (json.id != localPlayer.id) {
+					getPlayerById(json.id).vector = json.vector;
+					getPlayerById(json.id).speed = json.speed;
+				}
+				break;
+			default:
+				break;
+		}
+	};
+	ws.onclose = function() {
+		stopSending();
+		console.log("close")
+	};
+	ws.onerror = function() {
+		stopSending();
+		console.log("error")
+	}
+}
+
+var lastKeysSent;
+
+function sendKeys() {
+	if (canSend && JSON.stringify(lastKeysSent) != JSON.stringify(localPlayer.keys)) {
+		lastKeysSent = {
+			"left": localPlayer.keys.left,
+			"up": localPlayer.keys.up,
+			"right": localPlayer.keys.right,
+			"down": localPlayer.keys.down
+		}
+		ws.send(JSON.stringify({
+			"type": "keys",
+			"id": localPlayer.id,
+			"keys": localPlayer.keys
+		}));
+	}
+}
+
+function updateXY() {
+	ws.send(JSON.stringify({
+		"type": "xy",
+		"id": localPlayer.id,
+		vector: localPlayer.vector,
+		speed: localPlayer.speed
+	}))
+}
+
+var interval;
+
+function startSending() {
+	updateXY();
+	interval = window.setInterval(function() {
+		updateXY();
+	}, 1000);
+	canSend = true;
+}
+
+function stopSending() {
+	clearInterval(interval)
+	canSend = false;
+}
+
+
+////////////////
+//  GAMEPLAY  //
+////////////////
+var localPlayer;
+var allPlayers = [];
+
+function Player(local) {
+	this.vector = {
+		x: Math.floor((Math.random() * Player.maxX)),
+		y: Math.floor((Math.random() * Player.maxY))
+	}
+
+	this.id = "";
+	this.keys = {
+		left: false,
+		up: false,
+		right: false,
+		down: false
+	}
+	this.speed = {
+		x: 0,
+		y: 0
+	}
+
+	this.local = local;
+	if (local) localPlayer = this;
+
+	this.domObject = document.createElement("DIV");
+	this.domObject.className = "player" + (local ? " local" : "");
+	document.body.appendChild(this.domObject);
+
+	this.rgb = "";
+	this.setRGB(Math.floor(Math.random() * 150) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 200))
+
+	allPlayers.push(this);
+
+}
+
+Player.prototype.vector = {
+	x: 0,
+	y: 0
+}
+Player.prototype.id = ""; // "IP:Port", for instance: "176.189.182.97:59808"
+Player.prototype.keys = {
+	left: false,
+	up: false,
+	right: false,
+	down: false
+}
+Player.prototype.speed = {
+	x: 0,
+	y: 0
+}
+Player.prototype.local = false;
+Player.prototype.domObject = new Object();
+Player.prototype.rgb = "";
+
+Player.maxX = 1230;
+Player.maxY = 652;
+Player.maxSpeed = 5;
+Player.acceleration = 3.5;
+Player.deceleration = 1.5;
+Player.amortization = .75;
+Player.threshold = .7;
+Player.size = 50;
+
+var style = document.styleSheets[0];
+style.insertRule("#bg{width:" + (Player.maxX + Player.size) + "px; height:" + (Player.maxY + Player.size) + "px}", style.cssRules.length);
+style.insertRule(".player{width:" + Player.size + "px; height:" + Player.size + "px}", style.cssRules.length);
+
+Player.prototype.nextFrame = function() {
+	//accelerate (with input)
+	var a = ((this.keys.left || this.keys.right) && (this.keys.up || this.keys.down)) ? Player.acceleration / 2 : Player.acceleration;
+	if (this.keys.left) this.speed.x -= a;
+	if (this.keys.up) this.speed.y -= a;
+	if (this.keys.right) this.speed.x += a;
+	if (this.keys.down) this.speed.y += a;
+
+	//decelerate (proportionally)
+	if (Math.abs(this.speed.x) > 0 && Math.abs(this.speed.y) > 0) {
+		this.speed.x -= (this.speed.x / Math.abs(this.speed.x)) * Player.deceleration * Math.abs(this.speed.x) / (Math.abs(this.speed.x) + Math.abs(this.speed.y));
+		this.speed.y -= (this.speed.y / Math.abs(this.speed.y)) * Player.deceleration * Math.abs(this.speed.y) / (Math.abs(this.speed.x) + Math.abs(this.speed.y));
+	} else {
+		if (Math.abs(this.speed.x) > 0) this.speed.x -= (this.speed.x / Math.abs(this.speed.x)) * Player.deceleration;
+		if (Math.abs(this.speed.y) > 0) this.speed.y -= (this.speed.y / Math.abs(this.speed.y)) * Player.deceleration;
+	}
+
+	//change position (account for bouncing on walls)
+	if (Math.abs(this.speed.x) > 0) {
+		if (this.vector.x + this.speed.x > Player.maxX) {
+			this.vector.x = Player.maxX;
+			this.speed.x = -this.speed.x * Player.amortization;
+		} else if (this.vector.x + this.speed.x < 0) {
+			this.vector.x = 0;
+			this.speed.x = -this.speed.x * Player.amortization;
+		} else this.vector.x += this.speed.x;
+	}
+	if (Math.abs(this.speed.y) > 0) {
+		if (this.vector.y + this.speed.y > Player.maxY) {
+			this.vector.y = Player.maxY;
+			this.speed.y = -this.speed.y * Player.amortization;
+		} else if (this.vector.y + this.speed.y < 0) {
+			this.vector.y = 0;
+			this.speed.y = -this.speed.y * Player.amortization;
+		} else this.vector.y += this.speed.y;
+	}
+
+	//cancel vibrations
+	if (Math.abs(this.speed.x) < Player.threshold) this.speed.x = 0;
+	if (Math.abs(this.speed.y) < Player.threshold) this.speed.y = 0;
+
+	//update domElement
+	this.domObject.style.webkitTransform = "translate3d(" + this.vector.x + "px," + this.vector.y + "px,0)";
+}
+
+Player.prototype.setRGB = function(rgb) {
+	this.rgb = rgb;
+	if (this.local)
+		this.domObject.style.backgroundColor = "rgb(" + rgb + ")"
+	else
+		this.domObject.style.boxShadow = "inset 0 0 0 2px rgba(" + rgb + ", .9)"
+}
+
+Player.prototype.selfDestruct = function() {
+	document.body.removeChild(this.domObject);
+	delete getPlayerById(this.id)
+	delete this
+}
+
+function startLoop(fps) {
+	window.setInterval(function() {
+		allPlayers.forEach(function(player) {
+			player.nextFrame();
+		})
+	}, 60);
+}
+
+function getPlayerById(id) {
+	for (var i = allPlayers.length - 1; i >= 0; i--) {
+		if (allPlayers[i].id == id)
+			return allPlayers[i]
+	};
+	return false
+}
+
+
+
+////////////////////
+//  INTERACTIONS  //
+////////////////////
+
+//handling user input
+
+function keydown(event) {
+	var keyCode = ('which' in event) ? event.which : event.keyCode;
+	switch (keyCode) {
+		case 37:
+			localPlayer.keys.left = true;
+			break;
+		case 38:
+			localPlayer.keys.up = true;
+			break;
+		case 39:
+			localPlayer.keys.right = true;
+			break;
+		case 40:
+			localPlayer.keys.down = true;
+			break;
+		default:
+			break;
+	}
+	sendKeys();
+}
+
+function keyup(event) {
+	var keyCode = ('which' in event) ? event.which : event.keyCode;
+	switch (keyCode) {
+		case 37:
+			localPlayer.keys.left = false;
+			break;
+		case 38:
+			localPlayer.keys.up = false;
+			break;
+		case 39:
+			localPlayer.keys.right = false;
+			break;
+		case 40:
+			localPlayer.keys.down = false;
+			break;
+		default:
+			break;
+	}
+	sendKeys();
+}
+
+function lostFocus() {
+	document.getElementsByTagName('input')[0].focus();
+}
+</script>

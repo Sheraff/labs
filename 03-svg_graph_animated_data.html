@@ -1,0 +1,115 @@
+<style>
+body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	width: 100%;
+	background-color: white;
+}
+
+#bg{
+	background-image: url(img/bg-6.jpg);
+	background-size: cover;
+	background-position: 50% 50%;
+
+	position: fixed;
+	top: -5%;
+	left: -5%;
+	z-index: -9999999999999;
+
+	height: 110%;
+	width: 110%;
+	opacity: .7;
+
+	-webkit-filter: blur(5px);
+}
+
+svg {
+	height: 50%;
+	width: 100%;
+	margin-top: 20vh;
+}
+line {
+	stroke-linecap: round;
+	stroke-width: .5%;
+	stroke:DarkSlateBlue;
+}
+circle {
+	fill:DarkSlateBlue;
+}
+</style>
+
+<div id="bg"></div>
+<svg></svg>
+
+<script>
+var mysvg = document.getElementsByTagName('svg')[0];
+var load_time = Date.now();
+var circle = mysvg.getElementsByTagName('circle');
+var line = mysvg.getElementsByTagName('line');
+
+function moveToArray(y) { //x to be replaced by array
+	var duration = .5;
+
+	var y_loop = (y[0] + y[circle.length - 1]) / 2;
+	var line_part_1 = "<animate attributeName=\"y1\" begin=\"lastAnim.begin\" dur=\"" + duration + "s\" to=\"" + y_loop + "%\" fill=\"freeze\"/>";
+	for (var i = 0; i < circle.length; i++) {
+		line[i].innerHTML = line_part_1 + "<animate attributeName=\"y2\" begin=\"lastAnim.begin\" dur=\"" + duration + "s\" to=\"" + y[i] + "%\" fill=\"freeze\"/>";
+		circle[i].innerHTML = "<animate attributeName=\"cy\" begin=\"lastAnim.begin\" dur=\"" + duration + "s\" to=\"" + y[i] + "%\" fill=\"freeze\"/>";
+		line_part_1 = "<animate attributeName=\"y1\" begin=\"lastAnim.begin\" dur=\"" + duration + "s\" to=\"" + y[i] + "%\" fill=\"freeze\"/>";
+	}
+	var begin_time = (Date.now() - load_time) / 1000;
+	line[circle.length].innerHTML = line_part_1 + "<animate id=\"lastAnim\" attributeName=\"y2\" begin=\"" + begin_time + "\" dur=\"" + duration + "s\" to=\"" + y_loop + "%\" fill=\"freeze\"/>";
+}
+
+function setFromArray(y){
+	for (var i = 0; i < circle.length; i++) {
+		circle[i].setAttribute("cy", y[i] + "%");
+		line[i].setAttribute("y2", y[i] + "%");
+		line[i + 1].setAttribute("y1", y[i] + "%");
+	}
+	var y_loop = (y[0] + y[circle.length - 1]) / 2;
+	line[0].setAttribute("y1", y_loop + "%");
+	line[circle.length].setAttribute("y2", y_loop + "%");
+}
+
+function draw(svg) {
+	var nb_points = 10;
+	var innerHTML = "<line x1=\"1%\" y1=\"50%\"";
+	for (var i = 0; i < nb_points; i++) {
+		var x = 100 / (nb_points*2+1) * (2 * i + 1.5);
+		innerHTML += "x2=\"" + x + "%\" y2=\"50%\"/><circle r=\"2%\" cx=\"" + x + "%\" cy=\"50%\"/><line x1=\"" + x + "%\" y1=\"50%\"";
+	};
+	svg.innerHTML = innerHTML + "x2=\"99%\" y2=\"50%\"/>" + svg.innerHTML;
+}
+draw(mysvg);
+
+var array = [30, 79, 80, 60, 50, 30, 20, 50, 90, 80, 70, 90];
+setFromArray(array);
+window.setInterval(function() {
+	setFromArray(array);
+	moveToArray(shuffle(array));
+}, 1500);
+
+
+function shuffle(array) {
+	//http://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+	var currentIndex = array.length,
+		temporaryValue, randomIndex;
+
+	// While there remain elements to shuffle...
+	while (0 !== currentIndex) {
+
+		// Pick a remaining element...
+		randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex -= 1;
+
+		// And swap it with the current element.
+		temporaryValue = array[currentIndex];
+		array[currentIndex] = array[randomIndex];
+		array[randomIndex] = temporaryValue;
+	}
+
+	return array;
+}
+</script>

@@ -1,0 +1,325 @@
+<style>
+	@font-face {
+	    font-family:'Simple-Line-Icons';
+	    src:url('fonts/Simple-Line-Icons.eot');
+	    src:url('fonts/Simple-Line-Icons.eot?#iefix') format('embedded-opentype'), url('fonts/Simple-Line-Icons.woff') format('woff'), url('fonts/Simple-Line-Icons.ttf') format('truetype'), url('fonts/Simple-Line-Icons.svg#Simple-Line-Icons') format('svg');
+	    font-weight: normal;
+	    font-style: normal;
+	}
+	[data-icon]::before, [data-icon]::after {
+	    font-family:'Simple-Line-Icons';
+	    content: attr(data-icon);
+	    speak: none;
+	    font-weight: normal;
+	    font-variant: normal;
+	    text-transform: none;
+	}
+	[data-text]::before, [data-text]::after{
+		content: attr(data-text);
+	}
+	*, *::after {
+	    margin: 0;
+	    padding: 0;
+	    box-sizing: border-box;
+	}
+	body{
+		height: 100%;
+		width: 100%;
+
+		background-color: #DDD;
+
+		font-family: sans-serif;
+		font-weight: 100;
+		text-rendering: optimizeLegibility;
+		-webkit-font-smoothing: antialiased;
+		letter-spacing: 0.03em;
+
+		display: flex;
+		flex-wrap: wrap;
+	}
+
+	.bg{
+		background-image: url(img/bg-2.jpg);
+		background-size: cover;
+		background-position: 50% 50%;
+
+		position: fixed;
+		top: -5%;
+		left: -5%;
+		z-index: -9999999999999;
+
+		height: 110%;
+		width: 110%;
+		opacity: .7;
+
+		-webkit-filter: blur(5px);
+	}
+
+	div:not(.bg){
+		-webkit-flex: 1;
+		min-width: 300px;
+		display: flex;
+	}
+
+	a{
+		position: relative;
+		z-index: 10;
+		margin: auto;
+		padding: 1rem;
+		box-shadow: 0 0 0 2px white;
+		background-color: rgba(255,255,255,.1);
+		border-radius: 1rem;
+		cursor: pointer;
+
+		font-size: 3rem;
+		color:white;
+
+		overflow: hidden;
+
+		transition: all .25s ease-out;
+		-webkit-backface-visibility: hidden;
+	}
+	a:hover{
+		/*padding: 2rem;*/
+		/*-webkit-transform: scale(1.25);*/
+	}
+	a:hover::before{
+		opacity: .5;
+	}
+	a::after{
+		position: relative;
+	}
+	a::before{
+		transition: all .25s ease-out;
+		-webkit-transform: translate3d(0, 0, 0);
+		-webkit-backface-visibility: hidden;
+		-webkit-perspective: 1000;
+
+		position: absolute;
+		color: transparent;
+		opacity: .2;
+		text-shadow:
+			1px 1px 0 black,
+			2px 2px 0 black,
+			3px 3px 0 black,
+			4px 4px 0 black,
+			5px 5px 0 black,
+			6px 6px 0 black,
+			7px 7px 0 black,
+			8px 8px 0 black,
+			9px 9px 0 black,
+			10px 10px 0 black,
+			11px 11px 0 black,
+			12px 12px 0 black,
+			13px 13px 0 black,
+			14px 14px 0 black,
+			15px 15px 0 black,
+			16px 16px 0 black,
+			17px 17px 0 black,
+			18px 18px 0 black,
+			19px 19px 0 black,
+			20px 20px 0 black,
+			21px 21px 0 black,
+			22px 22px 0 black,
+			23px 23px 0 black,
+			24px 24px 0 black,
+			25px 25px 0 black,
+			26px 26px 0 black,
+			27px 27px 0 black,
+			28px 28px 0 black,
+			29px 29px 0 black,
+			30px 30px 0 black,
+			31px 31px 0 black,
+			32px 32px 0 black,
+			33px 33px 0 black,
+			34px 34px 0 black,
+			35px 35px 0 black,
+			36px 36px 0 black,
+			37px 37px 0 black,
+			38px 38px 0 black,
+			39px 39px 0 black,
+			40px 40px 0 black,
+			41px 41px 0 black,
+			42px 42px 0 black,
+			43px 43px 0 black,
+			44px 44px 0 black,
+			45px 45px 0 black,
+			46px 46px 0 black,
+			47px 47px 0 black,
+			48px 48px 0 black,
+			49px 49px 0 black,
+			50px 50px 0 black,
+			51px 51px 0 black,
+			52px 52px 0 black,
+			53px 53px 0 black,
+			54px 54px 0 black,
+			55px 55px 0 black,
+			56px 56px 0 black,
+			57px 57px 0 black,
+			58px 58px 0 black,
+			59px 59px 0 black,
+			60px 60px 0 black,
+			61px 61px 0 black,
+			62px 62px 0 black,
+			63px 63px 0 black,
+			64px 64px 0 black,
+			65px 65px 0 black,
+			66px 66px 0 black,
+			67px 67px 0 black,
+			68px 68px 0 black,
+			69px 69px 0 black,
+			70px 70px 0 black,
+			71px 71px 0 black,
+			72px 72px 0 black,
+			73px 73px 0 black,
+			74px 74px 0 black,
+			75px 75px 0 black,
+			76px 76px 0 black,
+			77px 77px 0 black,
+			78px 78px 0 black,
+			79px 79px 0 black,
+			80px 80px 0 black,
+			81px 81px 0 black,
+			82px 82px 0 black,
+			83px 83px 0 black,
+			84px 84px 0 black,
+			85px 85px 0 black,
+			86px 86px 0 black,
+			87px 87px 0 black,
+			88px 88px 0 black,
+			89px 89px 0 black,
+			90px 90px 0 black,
+			91px 91px 0 black,
+			92px 92px 0 black,
+			93px 93px 0 black,
+			94px 94px 0 black,
+			95px 95px 0 black,
+			96px 96px 0 black,
+			97px 97px 0 black,
+			98px 98px 0 black,
+			99px 99px 0 black,
+			100px 100px 0 black,
+			101px 101px 0 black,
+			102px 102px 0 black,
+			103px 103px 0 black,
+			104px 104px 0 black,
+			105px 105px 0 black,
+			106px 106px 0 black,
+			107px 107px 0 black,
+			108px 108px 0 black,
+			109px 109px 0 black,
+			110px 110px 0 black,
+			111px 111px 0 black,
+			112px 112px 0 black,
+			113px 113px 0 black,
+			114px 114px 0 black,
+			115px 115px 0 black,
+			116px 116px 0 black,
+			117px 117px 0 black,
+			118px 118px 0 black,
+			119px 119px 0 black,
+			120px 120px 0 black,
+			121px 121px 0 black,
+			122px 122px 0 black,
+			123px 123px 0 black,
+			124px 124px 0 black,
+			125px 125px 0 black,
+			126px 126px 0 black,
+			127px 127px 0 black,
+			128px 128px 0 black,
+			129px 129px 0 black,
+			130px 130px 0 black,
+			131px 131px 0 black,
+			132px 132px 0 black,
+			133px 133px 0 black,
+			134px 134px 0 black,
+			135px 135px 0 black,
+			136px 136px 0 black,
+			137px 137px 0 black,
+			138px 138px 0 black,
+			139px 139px 0 black,
+			140px 140px 0 black,
+			141px 141px 0 black,
+			142px 142px 0 black,
+			143px 143px 0 black,
+			144px 144px 0 black,
+			145px 145px 0 black,
+			146px 146px 0 black,
+			147px 147px 0 black,
+			148px 148px 0 black,
+			149px 149px 0 black,
+			150px 150px 0 black,
+			151px 151px 0 black,
+			152px 152px 0 black,
+			153px 153px 0 black,
+			154px 154px 0 black,
+			155px 155px 0 black,
+			156px 156px 0 black,
+			157px 157px 0 black,
+			158px 158px 0 black,
+			159px 159px 0 black,
+			160px 160px 0 black,
+			161px 161px 0 black,
+			162px 162px 0 black,
+			163px 163px 0 black,
+			164px 164px 0 black,
+			165px 165px 0 black,
+			166px 166px 0 black,
+			167px 167px 0 black,
+			168px 168px 0 black,
+			169px 169px 0 black,
+			170px 170px 0 black,
+			171px 171px 0 black,
+			172px 172px 0 black,
+			173px 173px 0 black,
+			174px 174px 0 black,
+			175px 175px 0 black,
+			176px 176px 0 black,
+			177px 177px 0 black,
+			178px 178px 0 black,
+			179px 179px 0 black,
+			180px 180px 0 black,
+			181px 181px 0 black,
+			182px 182px 0 black,
+			183px 183px 0 black,
+			184px 184px 0 black,
+			185px 185px 0 black,
+			186px 186px 0 black,
+			187px 187px 0 black,
+			188px 188px 0 black,
+			189px 189px 0 black,
+			190px 190px 0 black,
+			191px 191px 0 black,
+			192px 192px 0 black,
+			193px 193px 0 black,
+			194px 194px 0 black,
+			195px 195px 0 black,
+			196px 196px 0 black,
+			197px 197px 0 black,
+			198px 198px 0 black,
+			199px 199px 0 black;
+	}
+
+	div:nth-child(2) a:hover{
+		padding: 1rem 4rem 4rem 1rem;
+		background-color: rgba(255,255,255,.2);
+	}
+
+	div:nth-child(3) a{
+		background-color: rgba(70, 130, 180, .5);
+	}
+	div:nth-child(3) a:hover{
+		background-color: rgba(70, 130, 180, .2);
+	}
+
+
+</style>
+
+<div class="bg"></div>
+<div><a data-icon="&#xe026;"></a></div>
+<div><a data-icon="&#xe034;"></a></div>
+<div><a data-text="click me"></a></div>
+
+<script>
+
+</script>

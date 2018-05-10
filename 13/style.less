@@ -1,0 +1,61 @@
+.body-font(){
+	font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+}
+*, *::before, *::after{
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+html, body{
+	height: 100%;
+	width: 100%;
+}
+body{
+	.body-font();
+	font-size: 15px;
+	font-weight: 100;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: subpixel-antialiased;
+	letter-spacing: 0.075em;
+
+	background-color: black;
+	color: white;
+
+	overflow: hidden;
+	display: flex;
+}
+body>div{
+	margin: auto;
+	display: block;
+	overflow: hidden;
+	transition: all .5s ease-out;
+}
+.strip{
+	white-space: nowrap;
+}
+img{
+	display: inline;
+	height: auto;
+}
+p{
+	position: absolute;
+	width: 100%;
+	text-align: center;
+	padding: 1em;
+}
+audio{
+	position: absolute;
+	display: block;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	text-align: center;
+}
+body:not(.zeo){
+	&>div{
+		width: 100%;
+	}
+	.strip{
+		animation-timing-function: linear;
+	}
+}
