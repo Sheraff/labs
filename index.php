@@ -66,8 +66,14 @@ HTML;
 ?>
 <script>
 	var toggle = true;
-	document.onclick = function () { document.body.className = "" }
-	document.querySelector('header a').onclick = function (e) { if(toggle) document.body.className = "low"; else document.body.className = ""; toggle = !toggle; e.stopPropagation()}
+	document.onclick = function () {
+		document.body.className = ""
+	}
+	document.querySelector('header a').onclick = function (e) {
+		if(toggle) document.body.className = "low";
+		else document.body.className = "";
+		toggle = !toggle; e.stopPropagation()
+	}
 
 	var mail = document.getElementsByTagName('footer')[0].getElementsByTagName('a')[0];
 	mail.setAttribute("href", mail.getAttribute("href").replace(/-/g, ""));

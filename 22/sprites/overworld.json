@@ -1,0 +1,32 @@
+{
+	"src": "tiles.png",
+	"tileWidth": 16,
+	"tileHeight": 16,
+	"tiles": [
+		{"indexes": [0, 0], "name": "ground"},
+		{"indexes": [1, 0], "name": "brick"},
+		{"indexes": [2, 0], "name": "brick-wall"},
+		{"indexes": [3, 0], "name": "metal"},
+		{"indexes": [0, 1], "name": "chocolate"},
+		{"indexes": [24, 0], "name": "chance"},
+		{"indexes": [25, 0], "name": "chance-off"},
+		{"indexes": [26, 0], "name": "chance-blink"},
+		{"indexes": [5, 8], "name": "ground-bush-left"},
+		{"indexes": [6, 8], "name": "ground-bush"},
+		{"indexes": [7, 8], "name": "ground-bush-right"},
+		{"indexes": [5, 9], "name": "ground-yoshi-left"},
+		{"indexes": [6, 9], "name": "ground-yoshi"},
+		{"indexes": [7, 9], "name": "ground-yoshi-right"},
+		{"indexes": [3, 21], "name": "sky"},
+		{"indexes": [4, 21], "name": "cloud-block"},
+		{"indexes": [8, 20], "name": "ground-cloud-left"},
+		{"indexes": [9, 20], "name": "ground-cloud"},
+		{"indexes": [10, 20], "name": "ground-cloud-right"},
+		{"indexes": [5, 20], "name": "deco-cloud-top-left"},
+		{"indexes": [6, 20], "name": "deco-cloud-top-center"},
+		{"indexes": [7, 20], "name": "deco-cloud-top-right"},
+		{"indexes": [5, 21], "name": "deco-cloud-bottom-left"},
+		{"indexes": [6, 21], "name": "deco-cloud-bottom-center"},
+		{"indexes": [7, 21], "name": "deco-cloud-bottom-right"}
+	]
+}
